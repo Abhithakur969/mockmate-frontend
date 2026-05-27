@@ -1,116 +1,68 @@
 import { useState } from "react";
 
-const MIN = 30;
+export default function AnswerForm({ onSubmit, onSkip, error, isLoading }) {
+  const [text, setText] = useState("");
+  const minWords = 30;
 
-export default function AnswerForm({
-  onSubmit,
-  onSkip,
-  onChangeRole,
-  isLoading,
-  error,
-}) {
-  const [answer, setAnswer] = useState("");
-  const chars = answer.trim().length;
-  const ready = chars >= MIN;
-  const barPct = Math.min((chars / 400) * 100, 100);
-  const barCol = chars < MIN ? "#F5A623" : chars > 350 ? "#EAB308" : "#22C55E";
+  // Simple character or word hint tracker
+  const wordsLeft = Math.max(
+    0,
+    minWords - (text.trim() ? text.trim().split(/\s+/).length : 0),
+  );
 
-  const go = () => {
-    if (ready && !isLoading) onSubmit(answer);
-  };
-  const onKey = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") go();
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!text.trim() || isLoading) return;
+    onSubmit(text);
   };
 
   return (
-    <div className="animate-fade-up">
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-[10px] text-muted tracking-widest">
-          YOUR ANSWER
-        </span>
-        <span
-          className="font-mono text-[10px] tracking-wide transition-colors"
-          style={{
-            color:
-              chars < MIN ? "#505050" : chars > 350 ? "#EAB308" : "#22C55E",
-          }}
-        >
-          {chars}
-          {chars < MIN ? ` / need ${MIN - chars} more` : ""}
-        </span>
-      </div>
-
-      <div className="relative">
+    <form onSubmit={handleSubmit} className="space-y-4 anim-fade-up d1">
+      <div className="relative border border-line focus-within:border-accent bg-bg transition-colors shadow-[4px_4px_0px_0px_rgba(26,22,18,0.03)]">
+        {/* Dynamic input area */}
         <textarea
-          rows={8}
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          onKeyDown={onKey}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Write your answer as if you're in a real interview. Use your own words..."
           disabled={isLoading}
-          placeholder={
-            "Write as if you're in the real interview.\nNo Googling — think it through in your own words.\nGive examples where you can."
-          }
-          className="w-full bg-surface border border-border text-snow font-body text-sm
-                     p-5 resize-none outline-none leading-relaxed transition-colors
-                     placeholder:text-subtle focus:border-amber
-                     disabled:opacity-40 disabled:cursor-not-allowed"
+          rows={6}
+          className="w-full bg-transparent text-ink font-sans text-sm p-5 focus:outline-none resize-none leading-relaxed placeholder:text-ink-mute/70"
         />
-        {/* char progress */}
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-surface-3">
-          <div
-            className="h-full transition-all duration-300 ease-out"
-            style={{ width: `${barPct}%`, background: barCol }}
-          />
+
+        {/* Dynamic word count utility footer */}
+        <div className="flex justify-end p-3 border-t border-line-soft bg-line-soft/10">
+          <span className="font-mono text-[10px] text-ink-mute tracking-wider uppercase">
+            {wordsLeft > 0 ? `Need ${wordsLeft} more words` : "Ready to grade"}
+          </span>
         </div>
       </div>
 
+      {/* Form validation or API gateway error notification */}
       {error && (
-        <div className="animate-fade-in mt-3 px-4 py-3 border border-red-dim bg-red-bg">
-          <p className="font-mono text-[10px] text-red tracking-widest">
-            ⚠ {error}
-          </p>
+        <div className="p-4 bg-fail/10 border border-fail text-fail font-mono text-xs tracking-wide">
+          ⚠️ {error}
         </div>
       )}
 
-      {!error && (
-        <p className="mt-2 font-mono text-[10px] text-subtle tracking-widest">
-          CTRL + ENTER TO SUBMIT
-        </p>
-      )}
-
-      <div className="flex gap-2 mt-5">
+      {/* Action button controls layout panel */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
         <button
-          onClick={go}
-          disabled={!ready || isLoading}
-          className="btn-primary flex-1 py-4 text-[10px]"
+          type="submit"
+          disabled={isLoading || !text.trim()}
+          className="btn-primary w-full sm:w-auto"
         >
-          {isLoading ? (
-            <>
-              <span
-                className="w-3 h-3 border-2 border-coal border-t-transparent
-                                 rounded-full animate-spin"
-              />{" "}
-              GRADING...
-            </>
-          ) : (
-            "SUBMIT ANSWER →"
-          )}
+          {isLoading ? "Processing..." : "Submit Answer"}
         </button>
+
         <button
+          type="button"
           onClick={onSkip}
           disabled={isLoading}
-          className="btn-ghost px-5 text-[10px]"
+          className="btn-secondary w-full sm:w-auto text-center"
         >
-          SKIP
-        </button>
-        <button
-          onClick={onChangeRole}
-          disabled={isLoading}
-          className="btn-ghost px-5 text-[10px]"
-        >
-          ROLE
+          Skip Question
         </button>
       </div>
-    </div>
+    </form>
   );
 }

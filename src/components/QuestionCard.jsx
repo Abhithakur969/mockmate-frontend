@@ -1,55 +1,50 @@
 import { useState } from "react";
 
-export default function QuestionCard({ question, role, questionNum }) {
-  const [hintOpen, setHintOpen] = useState(false);
+export default function QuestionCard({ question, role, qNum }) {
+  const [showHint, setShowHint] = useState(false);
+
+  // Formats a single digit to always show as 01, 02, etc.
+  const formattedNum = String(qNum).padStart(2, "0");
 
   return (
-    <div className="animate-fade-up mb-6">
-      <div className="flex items-center gap-4 mb-5">
-        <span className="section-label">02 / Answer</span>
-        <span className="display-rule" />
-        <span className="font-mono text-[10px] text-muted border border-border px-3 py-1 shrink-0 tracking-wide">
+    <div className="bg-bg border border-line p-6 sm:p-8 mb-6 shadow-[4px_4px_0px_0px_rgba(46,107,61,0.06)] anim-fade-up">
+      {/* Header section with metadata */}
+      <div className="flex items-center justify-between border-b border-line-soft pb-4 mb-6">
+        <span className="font-mono text-[11px] text-ink-mute tracking-widest uppercase">
           {role}
+        </span>
+        <span className="font-mono text-[11px] text-accent tracking-widest font-medium">
+          {formattedNum} / ANSWER
         </span>
       </div>
 
-      <div className="relative border border-border bg-surface p-7">
-        {/* amber corner */}
-        <span className="absolute top-0 left-0 w-10 h-[2px] bg-amber" />
-        <span className="absolute top-0 left-0 w-[2px] h-10 bg-amber" />
+      {/* Main technical question prompt */}
+      <h2 className="font-serif italic text-xl sm:text-2xl text-ink leading-relaxed mb-6">
+        {question?.question || "Loading question..."}
+      </h2>
 
-        <p className="section-label mb-4">
-          Q{String(questionNum).padStart(2, "0")}
-        </p>
-
-        <p className="font-body text-snow text-[1.05rem] md:text-lg leading-relaxed font-light">
-          {question.question}
-        </p>
-
-        <div className="mt-6 pt-5 border-t border-border">
+      {/* Interactive cleanly designed hint toggle */}
+      {question?.hint && (
+        <div className="border-t border-line-soft pt-4">
           <button
-            onClick={() => setHintOpen((v) => !v)}
-            className="flex items-center gap-2 font-mono text-[10px] text-muted
-                       hover:text-amber transition-colors tracking-widest"
+            onClick={() => setShowHint(!showHint)}
+            className="flex items-center gap-2 font-mono text-[10px] tracking-wider text-ink-soft hover:text-accent uppercase transition-colors"
           >
             <span
-              className="transition-transform duration-200 inline-block"
-              style={{ transform: hintOpen ? "rotate(90deg)" : "none" }}
+              className={`transform transition-transform duration-200 text-xs ${showHint ? "rotate-90" : ""}`}
             >
-              ▶
+              ▸
             </span>
-            {hintOpen ? "HIDE HINT" : "SHOW HINT"}
+            {showHint ? "Hide Hint" : "Show Hint"}
           </button>
-          {hintOpen && (
-            <p
-              className="animate-fade-in mt-3 pl-4 border-l-2 border-amber
-                          font-body text-sm text-light italic leading-relaxed"
-            >
+
+          {showHint && (
+            <p className="mt-3 font-sans text-sm text-ink-soft leading-relaxed bg-line-soft/30 p-4 border-l-2 border-accent/40 anim-fade-in">
               {question.hint}
             </p>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,70 +1,4 @@
-import { useEffect, useState } from "react";
-
-const CFG = {
-  PASS: { c: "#22C55E", bg: "#020D06", bd: "#14532D", icon: "✓" },
-  "NEEDS WORK": { c: "#EAB308", bg: "#0C0800", bd: "#713F12", icon: "△" },
-  FAIL: { c: "#EF4444", bg: "#120202", bd: "#7F1D1D", icon: "✕" },
-};
-
-function ScoreRing({ score }) {
-  const r = 46;
-  const circ = +(2 * Math.PI * r).toFixed(2);
-  const v = score >= 6 ? "PASS" : score >= 4 ? "NEEDS WORK" : "FAIL";
-  const cfg = CFG[v];
-  const [dash, setDash] = useState(circ);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDash(circ - (score / 10) * circ), 180);
-    return () => clearTimeout(t);
-  }, [score, circ]);
-
-  return (
-    <div className="flex flex-col items-center gap-3 shrink-0">
-      <div className="relative w-28 h-28">
-        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
-            fill="none"
-            stroke="#1a1a1a"
-            strokeWidth="6"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
-            fill="none"
-            stroke={cfg.c}
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={dash}
-            style={{
-              transition:
-                "stroke-dashoffset 1.4s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className="font-display text-4xl leading-none tracking-wider"
-            style={{ color: cfg.c }}
-          >
-            {score}
-          </span>
-          <span className="font-mono text-[10px] text-muted mt-0.5">/10</span>
-        </div>
-      </div>
-      <div
-        className="font-mono text-[10px] tracking-widest px-4 py-1.5 border"
-        style={{ color: cfg.c, background: cfg.bg, borderColor: cfg.bd }}
-      >
-        {cfg.icon} {v}
-      </div>
-    </div>
-  );
-}
+import { useState } from "react";
 
 export default function GradeResult({
   grade,
@@ -73,117 +7,131 @@ export default function GradeResult({
   onRetry,
   onChangeRole,
 }) {
-  const [showModel, setShowModel] = useState(false);
-  const [showYours, setShowYours] = useState(false);
+  const [showModelAnswer, setShowModelAnswer] = useState(false);
+  const [showYourAnswer, setShowYourAnswer] = useState(false);
+
+  const isPass = grade?.verdict?.toUpperCase() === "PASS";
+  const score = grade?.score || 0;
 
   return (
-    <div className="animate-fade-up">
-      <div className="flex items-center gap-4 mb-6">
-        <span className="section-label">03 / Result</span>
-        <span className="display-rule" />
-        <span className="font-mono text-[10px] text-muted tracking-widest">
-          GRADE REPORT
-        </span>
-      </div>
+    <div className="space-y-6 anim-fade-up">
+      {/* 1. Main Score Card Block */}
+      <div className="bg-bg border border-line p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(26,22,18,0.04)]">
+        <div className="flex flex-col md:flex-row items-center gap-8 border-b border-line-soft pb-6 mb-6">
+          {/* Radial Metric Container */}
+          <div className="flex flex-col items-center shrink-0">
+            <div className="relative w-28 h-28 flex items-center justify-center rounded-full border border-line bg-line-soft/10">
+              <div className="text-center">
+                <span className="font-serif italic text-4xl font-bold text-ink">
+                  {score}
+                </span>
+                <span className="font-mono text-xs text-ink-mute block -mt-1">
+                  / 10
+                </span>
+              </div>
+            </div>
 
-      {/* Score + feedback */}
-      <div className="relative border border-border bg-surface p-7 mb-3">
-        <span className="absolute top-0 left-0 w-12 h-[2px] bg-amber" />
-        <span className="absolute top-0 left-0 w-[2px] h-12 bg-amber" />
+            {/* Verdict Badge */}
+            <span
+              className={`mt-3 px-4 py-1 border font-mono text-[10px] tracking-widest font-semibold uppercase ${
+                isPass
+                  ? "bg-accent/10 border-accent text-accent"
+                  : "bg-fail/10 border-fail text-fail"
+              }`}
+            >
+              {grade?.verdict || "FAIL"}
+            </span>
+          </div>
 
-        <div className="flex flex-col sm:flex-row gap-7">
-          <ScoreRing score={grade.score} />
-
-          <div className="flex-1 space-y-5 min-w-0">
+          {/* AI Assessment Breakdown Text */}
+          <div className="space-y-4 w-full">
             <div>
-              <p className="font-mono text-[10px] text-green tracking-[0.25em] mb-2">
-                ▲ STRENGTHS
-              </p>
-              <p className="font-body text-sm text-light leading-relaxed border-l-2 border-green-dim pl-3">
-                {grade.strengths}
+              <span className="font-mono text-[10px] text-accent tracking-wider uppercase block mb-1 font-semibold">
+                ▲ Strengths
+              </span>
+              <p className="font-sans text-sm text-ink-soft leading-relaxed">
+                {grade?.strengths ||
+                  "No specific strengths noted for this response."}
               </p>
             </div>
-            <div>
-              <p className="font-mono text-[10px] text-yellow tracking-[0.25em] mb-2">
-                ▽ TO IMPROVE
-              </p>
-              <p className="font-body text-sm text-light leading-relaxed border-l-2 border-yellow-dim pl-3">
-                {grade.improvements}
+
+            <div className="border-t border-line-soft/60 pt-3">
+              <span className="font-mono text-[10px] text-fail tracking-wider uppercase block mb-1 font-semibold">
+                ▼ To Improve
+              </span>
+              <p className="font-sans text-sm text-ink-soft leading-relaxed">
+                {grade?.improvements || "No critical improvements suggested."}
               </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Model answer */}
-      <div className="border border-border bg-surface mb-3">
-        <button
-          onClick={() => setShowModel((v) => !v)}
-          className="w-full flex items-center justify-between px-6 py-4 group"
-        >
-          <span className="font-mono text-[10px] text-amber tracking-[0.25em]">
-            ★ MODEL ANSWER
-          </span>
-          <span
-            className="font-mono text-[10px] text-muted group-hover:text-amber transition-all duration-200 inline-block"
-            style={{ transform: showModel ? "rotate(180deg)" : "none" }}
-          >
-            ▼
-          </span>
-        </button>
-        {showModel && (
-          <div className="animate-fade-in px-6 pb-6 border-t border-border pt-5">
-            <p className="font-body text-sm text-light leading-relaxed italic">
-              "{grade.betterAnswer}"
-            </p>
+        {/* 2. Expandable Accordion Toggles */}
+        <div className="space-y-3">
+          {/* Model Answer Toggle Box */}
+          {grade?.betterAnswer && (
+            <div className="border border-line bg-bg">
+              <button
+                onClick={() => setShowModelAnswer(!showModelAnswer)}
+                className="w-full flex items-center justify-between p-4 font-mono text-[11px] tracking-wider text-ink uppercase hover:bg-line-soft/20 transition-colors"
+              >
+                <span>★ Model Answer Overview</span>
+                <span className="text-xs transition-transform duration-200">
+                  {showModelAnswer ? "▲" : "▼"}
+                </span>
+              </button>
+              {showModelAnswer && (
+                <div className="p-5 border-t border-line bg-ink text-bg font-mono text-xs leading-relaxed overflow-x-auto selection:bg-accent/30 selection:text-white">
+                  <p className="whitespace-pre-wrap max-w-full font-light tracking-wide">
+                    {grade.betterAnswer}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* User's Original Transcript Review Box */}
+          <div className="border border-line bg-bg">
+            <button
+              onClick={() => setShowYourAnswer(!showYourAnswer)}
+              className="w-full flex items-center justify-between p-4 font-mono text-[11px] tracking-wider text-ink-soft uppercase hover:bg-line-soft/20 transition-colors"
+            >
+              <span>Your Submitted Answer</span>
+              <span className="text-xs transition-transform duration-200">
+                {showYourAnswer ? "▲" : "▼"}
+              </span>
+            </button>
+            {showYourAnswer && (
+              <div className="p-5 border-t border-line bg-line-soft/10 font-sans text-sm text-ink-soft italic leading-relaxed">
+                "{answer || "Empty submission context string."}"
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Your answer */}
-      <div className="border border-border bg-surface mb-7">
-        <button
-          onClick={() => setShowYours((v) => !v)}
-          className="w-full flex items-center justify-between px-6 py-4 group"
-        >
-          <span className="font-mono text-[10px] text-muted tracking-[0.25em]">
-            YOUR ANSWER
-          </span>
-          <span
-            className="font-mono text-[10px] text-muted group-hover:text-amber transition-all duration-200 inline-block"
-            style={{ transform: showYours ? "rotate(180deg)" : "none" }}
+      {/* 3. Operational Action Navigation Footer */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <button onClick={onNext} className="btn-primary w-full sm:w-auto px-8">
+          Next Question →
+        </button>
+
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
+          <button
+            onClick={onRetry}
+            className="font-mono text-[11px] text-ink-soft hover:text-accent tracking-widest uppercase transition-colors"
           >
-            ▼
-          </span>
-        </button>
-        {showYours && (
-          <div className="animate-fade-in px-6 pb-6 border-t border-border pt-5">
-            <p className="font-body text-sm text-subtle leading-relaxed">
-              {answer}
-            </p>
-          </div>
-        )}
+            Retry This
+          </button>
+          <span className="text-line h-4 w-[1px] hidden sm:block" />
+          <button
+            onClick={onChangeRole}
+            className="font-mono text-[11px] text-ink-mute hover:text-accent tracking-widest uppercase transition-colors"
+          >
+            Change Role
+          </button>
+        </div>
       </div>
-
-      {/* Buttons */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <button
-          onClick={onNext}
-          className="btn-primary  py-4 text-[10px] col-span-2 sm:col-span-1"
-        >
-          NEXT QUESTION →
-        </button>
-        <button onClick={onRetry} className="btn-ghost py-4 text-[10px]">
-          RETRY THIS
-        </button>
-      </div>
-      <button
-        onClick={onChangeRole}
-        className="w-full font-mono text-[10px] text-muted hover:text-amber
-                         transition-colors tracking-widest py-3"
-      >
-        ← CHANGE ROLE
-      </button>
     </div>
   );
 }
