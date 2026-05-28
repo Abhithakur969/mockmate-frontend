@@ -1,48 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 
-export default function QuestionBank() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [profile, setProfile] = useState({ name: "Abhishek", goal: "Computer Science Engineer" });
-  const [progress, setProgress] = useState({});
-
-  // 1. Initial Data and Storage Sync Loaders
-  useEffect(() => {
-    const syncAppData = () => {
-      // Synchronize User Profile
-      const savedProfile = localStorage.getItem("user_profile");
-      if (savedProfile) {
-        try { setProfile(JSON.parse(savedProfile)); } catch (e) { console.error(e); }
-      }
-      
-      // Synchronize Question Progress Object
-      const savedProgress = localStorage.getItem("mockmate_question_progress");
-      if (savedProgress) {
-        try { setProgress(JSON.parse(savedProgress)); } catch (e) { console.error(e); }
-      }
-    };
-
-    syncAppData();
-    window.addEventListener("storage", syncAppData);
-    return () => window.removeEventListener("storage", syncAppData);
-  }, []);
-
-  // 2. The Checkbox Toggle Handler (Triggers Real-time Broadcast Event)
-  const handleToggleQuestion = (questionId) => {
-    const updatedProgress = {
-      ...progress,
-      [questionId]: !progress[questionId],
-    };
-    
-    // Save to local storage
-    localStorage.setItem("mockmate_question_progress", JSON.stringify(updatedProgress));
-    
-    // Update local react state
-    setProgress(updatedProgress);
-
-    // CRITICAL FIX: Broadcast event locally so the Progress page catches the change instantly
-    window.dispatchEvent(new Event("storage"));
-  };
 const DATA_SETS = {
   "Frontend Developer": [
     {
@@ -208,7 +166,7 @@ const DATA_SETS = {
         "Explain race conditions occurring when shared state modifies outside synchronized contexts.",
         "Write an environment parameters loader validating missing configuration values safely.",
         "How do thread pool restrictions impact performance profiles under intensive calculations?",
-        "Implement a data data sanitization utility neutralizing script injection payload strings.",
+        "Implement a data sanitization utility neutralizing script injection payload strings.",
         "Write an automated diagnostic checker logging unhandled rejection incidents fully.",
         "Explain CORS configuration patterns balancing access security and flexible cross-domain needs.",
         "Design a rate limiting mechanism protecting authentication routes from brute-force attempts.",
@@ -392,24 +350,27 @@ const DATA_SETS = {
 
 export default function QuestionBank() {
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // UX State 1: Forces role selection before showing questions
   const [selectedRole, setSelectedRole] = useState(null);
-
-  // UX State 2: Accordion state to toggle exactly one set open at a time
   const [openSetIndex, setOpenSetIndex] = useState(0);
 
-  // UX State 3: Persistent object tracking checked completed questions
   const [completedTasks, setCompletedTasks] = useState(() => {
-    const saved = localStorage.getItem("mockmate_question_progress");
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem("mockmate_question_progress");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
   });
 
   const [profile] = useState(() => {
-    const saved = localStorage.getItem("user_profile");
-    return saved
-      ? JSON.parse(saved)
-      : { name: "Abhishek", goal: "Computer Science Engineer" };
+    try {
+      const saved = localStorage.getItem("mockmate_profile_db");
+      return saved
+        ? JSON.parse(saved)
+        : { name: "Developer", goal: "Software Engineer" };
+    } catch {
+      return { name: "Developer", goal: "Software Engineer" };
+    }
   });
 
   useEffect(() => {
@@ -419,16 +380,38 @@ export default function QuestionBank() {
     );
   }, [completedTasks]);
 
-  // Check/Uncheck single question handler
   const toggleQuestion = (setId, qIndex) => {
     const key = `${setId}-${qIndex}`;
-    setCompletedTasks((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    const isNowChecked = !completedTasks[key];
+
+    const updatedProgress = { ...completedTasks, [key]: isNowChecked };
+    localStorage.setItem(
+      "mockmate_question_progress",
+      JSON.stringify(updatedProgress),
+    );
+    setCompletedTasks(updatedProgress);
+
+    try {
+      const logRaw = localStorage.getItem("mockmate_question_progress_log");
+      const log = logRaw ? JSON.parse(logRaw) : [];
+      if (isNowChecked) {
+        log.push({ key, checkedAt: new Date().toISOString() });
+      } else {
+        const idx = log.map((e) => e.key).lastIndexOf(key);
+        if (idx !== -1) log.splice(idx, 1);
+      }
+      localStorage.setItem(
+        "mockmate_question_progress_log",
+        JSON.stringify(log),
+      );
+    } catch {
+      /* ignore */
+    }
+
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("mockmate_question_checked"));
   };
 
-  // FIXED: Live Derived Metric for Upper Total Overview Count
   const prefix =
     selectedRole === "Frontend Developer"
       ? "fe"
@@ -451,10 +434,8 @@ export default function QuestionBank() {
       />
 
       <main className="flex-1 overflow-y-auto min-w-0 bg-[#FBF9F4]">
-        {/* Header Block */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-[#EAE3D2] h-14 flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center">
-            {/* FIXED: Links cleanly with Sidebar drawer toggles */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden w-8 h-8 flex items-center justify-center border border-[#EAE3D2] mr-3"
@@ -490,7 +471,6 @@ export default function QuestionBank() {
           )}
         </div>
 
-        {/* CONDITION 1: Onboarding Role Selection Overlay Gate */}
         {!selectedRole ? (
           <div className="max-w-3xl mx-auto px-6 py-16 text-center space-y-8">
             <div className="space-y-2">
@@ -529,7 +509,6 @@ export default function QuestionBank() {
             </div>
           </div>
         ) : (
-          /* CONDITION 2: Active Question Board View */
           <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#EAE3D2] pb-5 gap-3">
               <div>
@@ -540,18 +519,14 @@ export default function QuestionBank() {
                   {selectedRole} Subsets
                 </h1>
               </div>
-              {/* FIXED: Live count is fully synchronized to update on checking or unchecking instantly */}
               <p className="font-mono text-[11px] bg-[#E8DFC8]/40 text-[#1A1612] px-3 py-1 font-500 rounded-xs">
                 {totalCompletedOnActiveBoard} / 60 Completed
               </p>
             </div>
 
-            {/* Accordion List Parent Container */}
             <div className="space-y-3">
               {DATA_SETS[selectedRole].map((set, setIdx) => {
                 const isOpen = openSetIndex === setIdx;
-
-                // Track checked stats for the specific current map group
                 const completedInThisSet = set.questions.filter(
                   (_, qIdx) => completedTasks[`${set.id}-${qIdx}`],
                 ).length;
@@ -565,7 +540,6 @@ export default function QuestionBank() {
                     key={set.id}
                     className="bg-white border border-[#EAE3D2] rounded-xs overflow-hidden"
                   >
-                    {/* Accordion Toggle Card Header Row */}
                     <div
                       onClick={() => setOpenSetIndex(isOpen ? null : setIdx)}
                       className="p-5 flex items-center justify-between cursor-pointer hover:bg-[#FDFDFB] select-none gap-4"
@@ -578,7 +552,6 @@ export default function QuestionBank() {
                           {set.title}
                         </h3>
                       </div>
-
                       <div className="flex items-center space-x-4">
                         <span className="font-mono text-[11px] text-zinc-400">
                           {completedInThisSet} / {set.questions.length} (
@@ -600,7 +573,6 @@ export default function QuestionBank() {
                       </div>
                     </div>
 
-                    {/* Question Row Segment List Wrapper */}
                     {isOpen && (
                       <div className="border-t border-[#EAE3D2] bg-[#FAF9F4]/30 px-5 py-3 space-y-2">
                         {set.questions.map((question, qIdx) => {
@@ -642,5 +614,4 @@ export default function QuestionBank() {
       </main>
     </div>
   );
-}
 }
