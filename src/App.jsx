@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import Home from "./pages/Home"; // Preserved your home landing component
 import Dashboard from "./pages/Dashboard";
 import ProfileOnboarding from "./components/ProfileOnboarding";
 import Practice from "./pages/Practice";
@@ -33,6 +34,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {/* 1. Landing Entrance Point */}
+        <Route path="/" element={<Home />} />
+
+        {/* 2. Core Workspace Routing Platform */}
         <Route
           path="/dashboard"
           element={
@@ -45,7 +50,8 @@ export default function App() {
             )
           }
         />
-        {/* Additional routes inherit tracking context safely */}
+
+        {/* 3. Feature Channels inheriting onboarding metrics safely */}
         <Route
           path="/practice"
           element={
@@ -77,7 +83,8 @@ export default function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* 4. Safety Route Guard Rule pointing back home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
