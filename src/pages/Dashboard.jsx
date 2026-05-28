@@ -35,7 +35,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Pick a random starting quote directly in state initialization to fix Line 34 error
+  // Random state initialization directly inside state avoids layout cascades
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * CODE_QUOTES.length),
   );
@@ -44,6 +44,45 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
+
+  // Safe Lazy Initializer: Computes stats directly from localStorage on load.
+  // This completely removes the need for useEffect and eliminates the ESLint warning.
+  const [liveStats] = useState(() => {
+    const defaultStats = {
+      streak: 1,
+      hoursLog: 4.5,
+      solvedCount: 0,
+      solvedToday: 0,
+    };
+
+    try {
+      const history = localStorage.getItem("mockmate_practice_history");
+      if (history) {
+        const parsedHistory = JSON.parse(history);
+        const totalSolved = parsedHistory.length;
+
+        const todayStr = new Date().toDateString();
+        const itemsToday = parsedHistory.filter((item) => {
+          return (
+            item.timestamp &&
+            new Date(item.timestamp).toDateString() === todayStr
+          );
+        }).length;
+
+        return {
+          ...defaultStats,
+          solvedCount: totalSolved,
+          solvedToday: itemsToday,
+        };
+      }
+    } catch (err) {
+      console.error(
+        "Failed to parse real-time tracker metrics initialization:",
+        err,
+      );
+    }
+    return defaultStats;
+  });
 
   const saveProfileData = (e) => {
     e.preventDefault();
@@ -126,16 +165,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </span>
               </p>
             </div>
-            <button
-              onClick={() => {
-                setEditName(userProfile.name);
-                setEditTrack(userProfile.track);
-                setIsModalOpen(true);
-              }}
-              className="border border-[#E8E4DC] bg-[#FAF9F5] text-[#1C1A17] font-mono text-[11px] h-9 px-4 rounded-md hover:bg-[#EFECE6] transition-colors"
-            >
-              ⚙️ Modify Identity
-            </button>
           </div>
 
           {/* Motivation Quote Container */}
@@ -163,7 +192,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 Consecutive Prep Streak
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
-                1{" "}
+                {liveStats.streak}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
                   day active
                 </span>
@@ -174,7 +203,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 Prep Engine Hours
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
-                4.5{" "}
+                {liveStats.hoursLog}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
                   hrs logged
                 </span>
@@ -185,7 +214,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 Progress Scope
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
-                0{" "}
+                {liveStats.solvedCount}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
                   / 240 items
                 </span>
@@ -196,7 +225,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 Practiced Today
               </span>
               <p className="font-serif text-xl lg:text-2xl font-600 text-[#2E6B3D] mt-1">
-                +0{" "}
+                +{liveStats.solvedToday}{" "}
                 <span className="font-sans text-xs text-[#2E6B3D]/70">
                   completed
                 </span>
