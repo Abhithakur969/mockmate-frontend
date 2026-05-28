@@ -1,119 +1,106 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-export default function Sidebar({ mobileOpen, onClose, profile }) {
-  const navigate = useNavigate();
+export default function Sidebar({
+  isOpen,
+  onClose,
+  userProfile,
+  onTriggerEdit,
+}) {
   const location = useLocation();
 
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      path: "/dashboard",
-      icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-    },
-    {
-      id: "practice",
-      label: "Practice",
-      path: "/practice",
-      icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-    },
-    {
-      id: "question-bank",
-      label: "Question Bank",
-      path: "/question-bank",
-      icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-    },
-    {
-      id: "progress",
-      label: "Progress",
-      path: "/progress",
-      icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2",
-    },
+  const menuLinks = [
+    { name: "Dashboard", target: "/dashboard", emblem: "📊" },
+    { name: "Practice", target: "/practice", emblem: "💡" },
+    { name: "Question Bank", target: "/question-bank", emblem: "📖" },
+    { name: "Progress Analytics", target: "/progress", emblem: "📈" },
   ];
 
-  return (
-    <>
-      {/* Mobile Sidebar Overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-xs lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar Structural Frame */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-bg border-r border-line transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Brand Banner */}
-        <div className="h-14 border-b border-line flex items-center px-6 gap-2.5">
-          <div className="w-6 h-6 bg-accent flex items-center justify-center text-bg font-serif italic font-700 text-sm">
+  const coreSidebarPanel = (
+    <div className="flex flex-col h-full bg-[#FAF9F5] border-r border-[#EFECE6] p-4 relative">
+      {/* Brand Section Header */}
+      <div className="h-16 flex items-center px-2 border-b border-[#EFECE6] shrink-0">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 bg-[#2E6B3D] text-white flex items-center justify-center font-mono font-700 rounded-lg text-[14px]">
             M
           </div>
-          <span className="font-mono text-[11px] tracking-widest text-ink font-700 uppercase">
+          <span className="font-mono text-[12px] font-700 tracking-widest text-[#1C1A17] uppercase">
             MOCKMATE
           </span>
         </div>
+      </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <p className="font-mono text-[9px] text-ink-mute tracking-widest uppercase px-3 mb-2">
-            Main Menu
-          </p>
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  navigate(item.path);
-                  onClose();
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors font-sans text-[13px] ${
-                  isActive
-                    ? "bg-accent-bg text-accent font-500 border-l-2 border-accent"
-                    : "text-ink-soft hover:bg-bg-alt hover:text-ink font-300"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d={item.icon}
-                  />
-                </svg>
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+      {/* Main Navigation Row Selection Engine */}
+      <nav className="flex-1 py-6 space-y-1 overflow-y-auto">
+        <span className="block font-mono text-[9px] tracking-widest text-[#9C9487] uppercase font-600 px-3 mb-2">
+          Main Menu
+        </span>
+        {menuLinks.map((route) => {
+          const isSelected = location.pathname === route.target;
+          return (
+            <Link
+              key={route.name}
+              to={route.target}
+              onClick={() => onClose && onClose()}
+              className={`flex items-center space-x-3 px-3 h-11 rounded-lg text-[13px] font-sans font-500 transition-all ${
+                isSelected
+                  ? "bg-[#2E6B3D]/10 text-[#2E6B3D] font-600 shadow-3xs"
+                  : "text-[#5C574F] hover:bg-[#EFECE6]/60 hover:text-[#1C1A17]"
+              }`}
+            >
+              <span className="text-[15px] shrink-0">{route.emblem}</span>
+              <span className="truncate">{route.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
-        {/* User Card */}
-        <div className="p-4 border-t border-line bg-bg-alt">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-accent text-bg flex items-center justify-center font-serif text-sm uppercase">
-              {profile?.name?.charAt(0) || "D"}
-            </div>
-            <div className="min-w-0">
-              <p className="font-sans font-500 text-ink text-[12px] truncate">
-                {profile?.name || "Developer"}
-              </p>
-              <p className="font-mono text-[9px] text-ink-mute truncate tracking-wide">
-                {profile?.goal || "Software Engineer"}
-              </p>
-            </div>
+      {/* Bottom Profile Anchor Area: Fixed securely to the bottom corner */}
+      <div className="border-t border-[#EFECE6] pt-4 pb-2 mt-auto shrink-0">
+        <div
+          onClick={() => {
+            if (onTriggerEdit) onTriggerEdit();
+            if (onClose) onClose();
+          }}
+          className="flex items-center space-x-3 p-2 rounded-xl border border-transparent hover:border-[#E8E4DC] hover:bg-white cursor-pointer transition-all min-w-0 text-left"
+          title="Click to edit profile parameter configurations"
+        >
+          <div className="w-10 h-10 shrink-0 bg-[#2E6B3D] text-white flex items-center justify-center rounded-xl font-serif font-600 text-[15px] shadow-sm shadow-[#2E6B3D]/20">
+            {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : "D"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-sans font-600 text-[13px] text-[#1C1A17] truncate leading-tight">
+              {userProfile?.name || "Developer Profile"}
+            </h4>
+            <p className="font-sans text-[11px] text-[#706B63] truncate mt-0.5 font-400">
+              {userProfile?.track || "Tap to configure tracking Focus"}
+            </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Perspective Fixed Static Side Menu Navigation */}
+      <aside className="hidden lg:block w-64 h-screen shrink-0 sticky top-0 z-30">
+        {coreSidebarPanel}
+      </aside>
+
+      {/* Mobile Backdrop Overlay Wrapper */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden animate-in fade-in duration-150">
+          {/* Grayed-out backing surface blur masks */}
+          <div
+            className="fixed inset-0 bg-[#1C1A17]/30 backdrop-blur-xs"
+            onClick={onClose}
+          />
+
+          <aside className="relative w-64 max-w-[260px] h-full bg-[#FAF9F5] animate-in slide-in-from-left duration-200 ease-out shadow-2xl flex flex-col">
+            {coreSidebarPanel}
+          </aside>
+        </div>
+      )}
     </>
   );
 }

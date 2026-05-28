@@ -2,163 +2,86 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
-// Curated motivational developer insights context
-const DEV_VIBES = [
+const CODE_QUOTES = [
   "Clean code is not written; it is written on top of structural revisions.",
   "System architectures stabilize only under methodical edge-case verification.",
   "Great engineers build systems that decouple heavy runtime dependencies safely.",
   "Optimize for readability first; execution cycles follow modular simplicity.",
   "Deep technical depth is forged through continuous operational debugging.",
   "Every broken compilation trace is a detailed architectural blueprint in disguise.",
-  "There are 10 types of people: those who understand binary, and those who don't. 😉",
-  "Don't worry if it doesn't work right. If everything did, you'd be out of a job.",
-  "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?'",
-  "Before software can be reusable it first has to be usable. You're doing great!",
-  "Remember: Code is like humor. When you have to explain it, it’s bad.",
-  "Have no fear! Compilers are just opinionated spell checkers.",
-  "System.out.println('You are absolute magic today!');",
-  "The best thing about a boolean is even if you are wrong, you are only off by a bit.",
-  "Your code might have bugs, but your determination is perfectly compiled. 🚀",
-  "Real developers don't comment code. If it was hard to write, it should be hard to read! (Just kidding, please write comments).",
-  "If at first you don't succeed, call it version 1.0.",
-  "An optimist says the glass is half full. A pessimist says it's half empty. A programmer says it's twice as large as necessary.",
-  "Keep coding. Somewhere, an edge case is waiting for you to become its hero.",
-  "Algorithm: Word used by programmers when they do not want to explain what they did.",
-  "A profile without bugs is an application that hasn't shipped yet. Smile!",
-  "To understand recursion, you must first understand recursion. 🔄",
-  "Coffee: turning beautifully complex concepts into compiled code syntax since day one.",
-  "Your commits today are building your dream workstation tomorrow.",
-  "In code we trust. In compiler warnings we politely look away.",
-  "Take a deep breath. Clear the console. You've got this fully handled! 🔥",
+  "You + me + this mock = a winning vibe – let’s flow, not force.",
+  "One question at a time, one smile at a time – we’ve got this, friend.",
+  "Mistakes are just high-fives from our future smarter selves.",
+  "Breathe in calm, breathe out doubt – now pass me that positive energy.",
+  "Even a wrong answer is a step closer to ‘ahh, I get it now!’",
+  "Let’s treat this mock like a fun game – score doesn’t matter, joy does.",
+  "Your focus is cute – keep going, you’re shining right now.",
+  "Pause, sip water, share a giggle – reset, then crush the next bit.",
+  "We don’t need to be perfect; we just need to be present – and we already are.",
+  "That little progress you just made? Yeah, that’s pure gold.",
+  "Let’s whisper to our brains: ‘You’re safe, you’re learning, you’re loved.’",
+  "Every click, every scribble – it’s all building our beautiful comeback.",
+  "Stuck? Smile at the screen – confusion is the secret doorway to clarity.",
+  "You showing up today is already a win – everything else is bonus.",
+  "Let’s compete only with who we were yesterday – and hug that version.",
+  "Imagine we’re coaching our best friends – now talk to yourself like that.",
+  "Fist bump for every tiny effort – they add up like magic.",
+  "After this mock, we celebrate with something sweet – but the real treat is us trying.",
+  "Your brain is not an enemy – it’s a playful puppy. Guide it with kindness.",
+  "Close your eyes for 3 seconds, feel your heartbeat – that’s your motivation, always there.",
 ];
 
-export default function Dashboard() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+export default function Dashboard({ userProfile, setUserProfile }) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 1. Safe, single-phase Profile Initialization
-  const [profile] = useState(() => {
-    const saved = localStorage.getItem("user_profile");
-    return saved
-      ? JSON.parse(saved)
-      : { name: "Abhishek", goal: "Computer Science Engineer" };
-  });
-
-  // 2. Safe, single-phase Motivational Selector
-  const [vibeIndex, setVibeIndex] = useState(() =>
-    Math.floor(Math.random() * DEV_VIBES.length),
+  // Pick a random starting quote directly in state initialization to fix Line 34 error
+  const [quoteIndex, setQuoteIndex] = useState(() =>
+    Math.floor(Math.random() * CODE_QUOTES.length),
   );
 
-  // 3. Real-Time Quantitative Progress Matrix Calculations
-  const metricsData = (() => {
-    const savedProgress = localStorage.getItem("mockmate_question_progress");
-    let completedKeys = [];
-    if (savedProgress) {
-      try {
-        completedKeys = Object.keys(JSON.parse(savedProgress));
-      } catch (e) {
-        console.error("Error reading progress maps", e);
-      }
-    }
+  // Editing parameters mapping
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editName, setEditName] = useState(userProfile?.name || "");
+  const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
-    // Direct counts by route track parsing prefix
-    const totalPracticed = completedKeys.length;
-    const frontendCount = completedKeys.filter((k) =>
-      k.startsWith("fe-"),
-    ).length;
-    const backendCount = completedKeys.filter((k) =>
-      k.startsWith("be-"),
-    ).length;
-    const fullstackCount = completedKeys.filter((k) =>
-      k.startsWith("fs-"),
-    ).length;
-    const mlCount = completedKeys.filter((k) => k.startsWith("ml-")).length;
-
-    // Track dynamic completion metrics (Each specialization contains 60 targeted items)
-    const fePercent = Math.min(Math.round((frontendCount / 60) * 100), 100);
-    const bePercent = Math.min(Math.round((backendCount / 60) * 100), 100);
-    const fsPercent = Math.min(Math.round((fullstackCount / 60) * 100), 100);
-    const mlPercent = Math.min(Math.round((mlCount / 60) * 100), 100);
-
-    // Calculate real preparation durations safely (1.5 hours per 5 items as a real benchmark rule)
-    const baselineHours = 4.5;
-    const hoursInvested = (baselineHours + totalPracticed * 0.3).toFixed(1);
-
-    // Formulate a dynamic rolling 'Practiced Today' value matching current session entries
-    const practicedToday =
-      completedKeys.length > 0 ? (completedKeys.length % 4) + 1 : 0;
-
-    // Manage a steady mock session streak threshold matching active progression
-    const currentStreak =
-      totalPracticed > 0 ? Math.min(Math.floor(totalPracticed / 3) + 2, 14) : 1;
-
-    return {
-      totalPracticed,
-      practicedToday,
-      hoursInvested,
-      currentStreak,
-      tracks: {
-        frontend: fePercent,
-        backend: bePercent,
-        fullstack: fsPercent,
-        ml: mlPercent,
-      },
+  const saveProfileData = (e) => {
+    e.preventDefault();
+    const updated = {
+      name: editName.trim() || "Developer",
+      track: editTrack.trim() || "Software Engineer",
     };
-  })();
-
-  // 4. Evaluation Performance Telemetry Configuration
-  const scoreMetrics = {
-    communication: 88,
-    technicalDepth: 74,
-    problemSolving: 82,
-    codeQuality: 78,
-  };
-
-  // Dynamic Rule Engine for Real-Time Feedback Diagnostics
-  const performanceInsights = (() => {
-    const sorted = Object.entries(scoreMetrics).sort((a, b) => a[1] - b[1]);
-    const [weakestKey, weakestScore] = sorted[0];
-    const [strongestKey, strongestScore] = sorted[sorted.length - 1];
-
-    const humanize = (key) =>
-      key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
-
-    return {
-      strengthTitle: `Excellent baseline inside ${humanize(strongestKey)}`,
-      strengthDesc: `Your performance mark of ${strongestScore}% establishes clear technical proficiency here. Continue applying this exact tactical delivery standard across complex operational scenarios.`,
-      weaknessTitle: `Focus Required: Elevate ${humanize(weakestKey)}`,
-      weaknessDesc: `Your cumulative evaluation standing is currently limited by ${humanize(weakestKey)} (${weakestScore}%). Target the corresponding technical sets in your Question Bank to directly counteract this limitation.`,
-      overallAvg: Math.round(
-        Object.values(scoreMetrics).reduce((a, b) => a + b, 0) / 4,
-      ),
-    };
-  })();
-
-  const rotateVibe = () => {
-    setVibeIndex((prev) => (prev + 1) % DEV_VIBES.length);
+    localStorage.setItem("mockmate_profile_db", JSON.stringify(updated));
+    setUserProfile(updated);
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="flex h-screen bg-[#FBF9F4] overflow-hidden">
+    <div className="flex h-screen w-screen bg-[#FDFDFB] overflow-hidden text-[#1C1A17] font-sans antialiased">
       <Sidebar
-        mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        profile={profile}
+        isOpen={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+        userProfile={userProfile}
+        onTriggerEdit={() => {
+          setEditName(userProfile.name);
+          setEditTrack(userProfile.track);
+          setIsModalOpen(true);
+        }}
       />
 
-      <main className="flex-1 overflow-y-auto min-w-0 bg-[#FBF9F4]">
-        {/* Sticky Top Header bar */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-[#EAE3D2] h-14 flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Top Header */}
+        <header className="h-16 border-b border-[#EFECE6] bg-white/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between sticky top-0 z-20 shrink-0">
+          <div className="flex items-center space-x-3">
             <button
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden w-8 h-8 flex items-center justify-center border border-[#EAE3D2] mr-3"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg border border-[#E8E4DC] bg-[#FAF9F5] text-[#1C1A17]"
             >
               <svg
-                className="w-4 h-4 text-[#1A1612]"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 viewBox="0 0 24 24"
               >
                 <path
@@ -168,368 +91,172 @@ export default function Dashboard() {
                 />
               </svg>
             </button>
-            <p className="font-sans font-600 text-[#1A1612] text-[14px]">
-              Developer Engineering Control Dashboard
-            </p>
+            <div className="hidden lg:block font-mono text-[10px] tracking-widest text-[#2E6B3D] uppercase font-600">
+              Control Terminal Core
+            </div>
+            <h1 className="lg:hidden font-serif text-lg font-600 tracking-tight">
+              Dashboard
+            </h1>
           </div>
+
           <button
             onClick={() => navigate("/practice")}
-            className="bg-[#2E6B3D] text-white font-mono text-[11px] px-4 h-8 flex items-center border border-[#23522E] tracking-wide hover:bg-[#245430] transition-colors shadow-2xs"
+            className="bg-[#2E6B3D] text-white font-sans font-500 text-[12px] lg:text-[13px] px-4 lg:px-5 h-9 lg:h-10 rounded-lg hover:bg-[#23522E] active:scale-[0.98] transition-all flex items-center space-x-1"
           >
-            + Start Active Practice
+            <span>Practice Active Track 🚀</span>
           </button>
-        </div>
+        </header>
 
-        <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-          {/* Interactive Motivational Banner row */}
-          <div
-            onClick={rotateVibe}
-            className="bg-white border border-[#EAE3D2] p-5 cursor-pointer hover:bg-[#FBF9F4] transition-all group relative overflow-hidden shadow-2xs"
-          >
-            <div className="absolute right-3 top-3 font-mono text-[9px] text-zinc-300 uppercase tracking-widest group-hover:text-[#2E6B3D] transition-colors">
-              Click to cycle paradigm ↻
-            </div>
-            <span className="font-mono text-[9px] tracking-widest text-[#2E6B3D] font-600 uppercase">
-              ARCHITECTURAL VIBE CHECK
-            </span>
-            <p className="font-serif italic text-[15px] text-[#1A1612] mt-1.5 font-300 leading-relaxed">
-              "{DEV_VIBES[vibeIndex]}"
-            </p>
-          </div>
-
-          {/* Real-Time Live Activity Indicators Panel */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-[#EAE3D2] p-4 shadow-3xs">
-              <span className="font-mono text-[9px] tracking-wider text-zinc-400 uppercase font-500">
-                Consecutive Prep Streak
-              </span>
-              <p className="font-serif text-3xl font-300 text-[#1A1612] mt-1">
-                {metricsData.currentStreak}{" "}
-                <span className="text-xs font-sans text-zinc-400">
-                  days active
+        {/* Dashboard Panels */}
+        <main className="flex-1 overflow-y-auto bg-[#FDFDFB] p-4 lg:p-8 space-y-6">
+          {/* Welcome Card Component */}
+          <div className="bg-white border border-[#EFECE6] rounded-xl p-6 lg:p-8 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="font-serif text-2xl lg:text-3xl font-500 tracking-tight">
+                Hello,{" "}
+                <span className="text-[#2E6B3D] font-600">
+                  {userProfile?.name}
+                </span>{" "}
+                ✨
+              </h2>
+              <p className="text-[#706B63] text-[13px] lg:text-[14px]">
+                Target Track &rarr;{" "}
+                <span className="font-mono bg-[#FAF9F5] border border-[#E8E4DC] px-2 py-0.5 rounded text-[12px] text-[#1C1A17] font-500">
+                  {userProfile?.track}
                 </span>
               </p>
             </div>
-            <div className="bg-white border border-[#EAE3D2] p-4 shadow-3xs">
-              <span className="font-mono text-[9px] tracking-wider text-zinc-400 uppercase font-500">
-                Calculated Prep Engine Hours
+            <button
+              onClick={() => {
+                setEditName(userProfile.name);
+                setEditTrack(userProfile.track);
+                setIsModalOpen(true);
+              }}
+              className="border border-[#E8E4DC] bg-[#FAF9F5] text-[#1C1A17] font-mono text-[11px] h-9 px-4 rounded-md hover:bg-[#EFECE6] transition-colors"
+            >
+              ⚙️ Modify Identity
+            </button>
+          </div>
+
+          {/* Motivation Quote Container */}
+          <div
+            onClick={() =>
+              setQuoteIndex((prev) => (prev + 1) % CODE_QUOTES.length)
+            }
+            className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs hover:border-[#2E6B3D]/30 transition-all cursor-pointer group relative"
+          >
+            <div className="absolute right-4 top-4 font-mono text-[8px] text-[#A69F93] uppercase tracking-widest">
+              Refresh Paradigm ↻
+            </div>
+            <span className="font-mono text-[9px] tracking-widest text-[#2E6B3D] font-600 uppercase block mb-2">
+              Architectural Vibe Check
+            </span>
+            <p className="font-serif italic text-[15px] lg:text-[17px] text-[#2A2722] leading-relaxed max-w-4xl">
+              "{CODE_QUOTES[quoteIndex]}"
+            </p>
+          </div>
+
+          {/* Grid Analytics Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
+              <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
+                Consecutive Prep Streak
               </span>
-              <p className="font-serif text-3xl font-300 text-[#1A1612] mt-1">
-                {metricsData.hoursInvested}{" "}
-                <span className="text-xs font-sans text-zinc-400">
+              <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
+                1{" "}
+                <span className="font-sans text-xs text-[#706B63]">
+                  day active
+                </span>
+              </p>
+            </div>
+            <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
+              <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
+                Prep Engine Hours
+              </span>
+              <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
+                4.5{" "}
+                <span className="font-sans text-xs text-[#706B63]">
                   hrs logged
                 </span>
               </p>
             </div>
-            <div className="bg-white border border-[#EAE3D2] p-4 shadow-3xs">
-              <span className="font-mono text-[9px] tracking-wider text-zinc-400 uppercase font-500">
-                Cumulative Progress Metrics
+            <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
+              <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
+                Progress Scope
               </span>
-              <p className="font-serif text-3xl font-300 text-[#1A1612] mt-1">
-                {metricsData.totalPracticed}{" "}
-                <span className="text-xs font-sans text-zinc-400">
-                  / 240 questions
+              <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
+                0{" "}
+                <span className="font-sans text-xs text-[#706B63]">
+                  / 240 items
                 </span>
               </p>
             </div>
-            <div className="bg-white border border-[#EAE3D2] p-4 shadow-3xs bg-[#2E6B3D]/5 border-[#2E6B3D]/20">
-              <span className="font-mono text-[9px] tracking-wider text-[#2E6B3D] uppercase font-600">
+            <div className="bg-[#2E6B3D]/5 border border-[#2E6B3D]/10 p-4 rounded-xl shadow-2xs">
+              <span className="block font-mono text-[9px] tracking-wider text-[#2E6B3D] uppercase font-600">
                 Practiced Today
               </span>
-              <p className="font-serif text-3xl font-400 text-[#2E6B3D] mt-1">
-                +{metricsData.practicedToday}{" "}
-                <span className="text-xs font-sans text-zinc-500">
+              <p className="font-serif text-xl lg:text-2xl font-600 text-[#2E6B3D] mt-1">
+                +0{" "}
+                <span className="font-sans text-xs text-[#2E6B3D]/70">
                   completed
                 </span>
               </p>
             </div>
           </div>
+        </main>
+      </div>
 
-          {/* Main Context Split Grid Block */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Left Hand Column: Specialty Module Trajectories */}
-            <div className="lg:col-span-2 space-y-4">
+      {/* Profile Modification Overlay Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1A17]/40 backdrop-blur-sm">
+          <div className="bg-white border border-[#EFECE6] rounded-xl w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="font-serif text-xl font-600 text-[#1C1A17] mb-1">
+              Update Engineering Parameters
+            </h3>
+            <form onSubmit={saveProfileData} className="space-y-4 mt-4">
               <div>
-                <span className="font-mono text-[10px] tracking-widest text-[#1A1612] font-600 uppercase">
-                  Core Specialization Modules
-                </span>
-                <p className="font-sans text-[11px] text-zinc-400 mt-0.5">
-                  Real-time tracker tied directly to your active question box
-                  selections.
-                </p>
+                <label className="block font-mono text-[10px] uppercase text-[#706B63] mb-1">
+                  Your Identity Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full h-10 border border-[#E8E4DC] px-3 rounded-lg text-[14px] bg-[#FAF9F5] focus:outline-none focus:border-[#2E6B3D] transition-all"
+                />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* TrackCard 1: Frontend */}
-                <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between h-36">
-                  <div>
-                    <div className="flex justify-between items-baseline">
-                      <h4 className="font-sans font-600 text-[14px] text-[#1A1612]">
-                        Frontend Developer
-                      </h4>
-                      <span className="font-serif text-xl italic text-[#2E6B3D]">
-                        {metricsData.tracks.frontend}%
-                      </span>
-                    </div>
-                    <p className="font-mono text-[10px] text-zinc-400 mt-0.5 uppercase tracking-wide">
-                      React · CSS Architecture · Virtual DOM
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-1 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                      <div
-                        className="h-full bg-[#2E6B3D] transition-all duration-500"
-                        style={{ width: `${metricsData.tracks.frontend}%` }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => navigate("/question-bank")}
-                      className="font-mono text-[10px] text-[#2E6B3D] hover:underline text-left"
-                    >
-                      Continue Track Module →
-                    </button>
-                  </div>
-                </div>
-
-                {/* TrackCard 2: Backend */}
-                <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between h-36">
-                  <div>
-                    <div className="flex justify-between items-baseline">
-                      <h4 className="font-sans font-600 text-[14px] text-[#1A1612]">
-                        Backend Developer
-                      </h4>
-                      <span className="font-serif text-xl italic text-slate-600">
-                        {metricsData.tracks.backend}%
-                      </span>
-                    </div>
-                    <p className="font-mono text-[10px] text-zinc-400 mt-0.5 uppercase tracking-wide">
-                      Node.js · REST APIs · Transaction Isolation
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-1 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                      <div
-                        className="h-full bg-slate-600 transition-all duration-500"
-                        style={{ width: `${metricsData.tracks.backend}%` }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => navigate("/question-bank")}
-                      className="font-mono text-[10px] text-slate-600 hover:underline text-left"
-                    >
-                      Continue Track Module →
-                    </button>
-                  </div>
-                </div>
-
-                {/* TrackCard 3: Full Stack */}
-                <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between h-36">
-                  <div>
-                    <div className="flex justify-between items-baseline">
-                      <h4 className="font-sans font-600 text-[14px] text-[#1A1612]">
-                        Full Stack Developer
-                      </h4>
-                      <span className="font-serif text-xl italic text-amber-700">
-                        {metricsData.tracks.fullstack}%
-                      </span>
-                    </div>
-                    <p className="font-mono text-[10px] text-zinc-400 mt-0.5 uppercase tracking-wide">
-                      System Pipelines · CORS · Relational Scaling
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-1 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                      <div
-                        className="h-full bg-amber-700 transition-all duration-500"
-                        style={{ width: `${metricsData.tracks.fullstack}%` }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => navigate("/question-bank")}
-                      className="font-mono text-[10px] text-amber-700 hover:underline text-left"
-                    >
-                      Continue Track Module →
-                    </button>
-                  </div>
-                </div>
-
-                {/* TrackCard 4: ML Engineer */}
-                <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between h-36">
-                  <div>
-                    <div className="flex justify-between items-baseline">
-                      <h4 className="font-sans font-600 text-[14px] text-[#1A1612]">
-                        Data / ML Engineer
-                      </h4>
-                      <span className="font-serif text-xl italic text-purple-700">
-                        {metricsData.tracks.ml}%
-                      </span>
-                    </div>
-                    <p className="font-mono text-[10px] text-zinc-400 mt-0.5 uppercase tracking-wide">
-                      Python · Feature Analytics · Scale Operations
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-1 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                      <div
-                        className="h-full bg-purple-700 transition-all duration-500"
-                        style={{ width: `${metricsData.tracks.ml}%` }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => navigate("/question-bank")}
-                      className="font-mono text-[10px] text-purple-700 hover:underline text-left"
-                    >
-                      Continue Track Module →
-                    </button>
-                  </div>
-                </div>
+              <div>
+                <label className="block font-mono text-[10px] uppercase text-[#706B63] mb-1">
+                  Focus Core Track
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editTrack}
+                  onChange={(e) => setEditTrack(e.target.value)}
+                  className="w-full h-10 border border-[#E8E4DC] px-3 rounded-lg text-[14px] bg-[#FAF9F5] focus:outline-none focus:border-[#2E6B3D] transition-all"
+                />
               </div>
-            </div>
-
-            {/* Right Hand Column: Live Interactive Scoreboard Overview */}
-            <div className="bg-white border border-[#EAE3D2] p-5 shadow-xs space-y-6">
-              <div className="border-b border-[#F2ECE0] pb-4 flex items-center justify-between">
-                <div>
-                  <span className="font-mono text-[9px] tracking-widest text-[#2E6B3D] font-600 uppercase">
-                    SESSION OVERVIEW
-                  </span>
-                  <h3 className="font-serif font-300 text-[18px] text-[#1A1612] mt-0.5">
-                    Evaluation Metrics
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <div className="font-serif text-2xl text-[#2E6B3D] font-400">
-                    {performanceInsights.overallAvg}%
-                  </div>
-                  <div className="font-mono text-[8px] text-zinc-400 uppercase tracking-wider">
-                    Weighted Score
-                  </div>
-                </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 h-9 font-sans text-[12px] font-500 border border-[#E8E4DC] rounded-lg text-[#706B63]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 h-9 font-sans text-[12px] font-500 bg-[#2E6B3D] text-white rounded-lg hover:bg-[#23522E] transition-colors"
+                >
+                  Save Modifications
+                </button>
               </div>
-
-              {/* Individual Scoring Bars */}
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between font-mono text-[11px] text-[#1A1612]">
-                    <span className="font-500">Communication Evaluation</span>
-                    <span className="text-zinc-500">
-                      {scoreMetrics.communication}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                    <div
-                      className="h-full bg-[#2E6B3D]"
-                      style={{ width: `${scoreMetrics.communication}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between font-mono text-[11px] text-[#1A1612]">
-                    <span className="font-500">Technical Depth Profiling</span>
-                    <span className="text-zinc-500">
-                      {scoreMetrics.technicalDepth}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                    <div
-                      className="h-full bg-[#2E6B3D]"
-                      style={{ width: `${scoreMetrics.technicalDepth}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between font-mono text-[11px] text-[#1A1612]">
-                    <span className="font-500">
-                      Algorithmic Problem Solving
-                    </span>
-                    <span className="text-zinc-500">
-                      {scoreMetrics.problemSolving}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                    <div
-                      className="h-full bg-[#2E6B3D]"
-                      style={{ width: `${scoreMetrics.problemSolving}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between font-mono text-[11px] text-[#1A1612]">
-                    <span className="font-500">Production Code Quality</span>
-                    <span className="text-zinc-500">
-                      {scoreMetrics.codeQuality}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F2ECE0] rounded-xs overflow-hidden">
-                    <div
-                      className="h-full bg-[#2E6B3D]"
-                      style={{ width: `${scoreMetrics.codeQuality}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Row: Dynamic Contextual Practice Insights Block */}
-          <div className="border-t border-[#EAE3D2] pt-6 space-y-4">
-            <div>
-              <span className="font-mono text-[10px] tracking-widest text-[#2E6B3D] font-600 uppercase">
-                LIVE PRACTICE DIAGNOSTICS
-              </span>
-              <p className="font-sans text-[11px] text-zinc-400 mt-0.5">
-                Automated programmatic logic processing your active metrics to
-                provide actionable professional goals.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Core Strength Card Context */}
-              <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="font-sans text-xs font-700 text-[#2E6B3D]">
-                      ✓
-                    </span>
-                    <span className="font-mono text-[9px] text-[#2E6B3D] font-600 uppercase tracking-wider">
-                      Identified Core Asset
-                    </span>
-                  </div>
-                  <h4 className="font-sans font-600 text-[13px] text-[#1A1612]">
-                    {performanceInsights.strengthTitle}
-                  </h4>
-                  <p className="font-sans text-[12px] font-300 text-zinc-500 mt-1 leading-relaxed">
-                    {performanceInsights.strengthDesc}
-                  </p>
-                </div>
-              </div>
-
-              {/* Core Weakness Optimization Card Context */}
-              <div className="bg-white border border-[#EAE3D2] p-5 shadow-3xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="font-sans text-xs font-700 text-amber-600">
-                      ⚠
-                    </span>
-                    <span className="font-mono text-[9px] text-amber-600 font-600 uppercase tracking-wider">
-                      Tactical Optimization Required
-                    </span>
-                  </div>
-                  <h4 className="font-sans font-600 text-[13px] text-[#1A1612]">
-                    {performanceInsights.weaknessTitle}
-                  </h4>
-                  <p className="font-sans text-[12px] font-300 text-zinc-500 mt-1 leading-relaxed">
-                    {performanceInsights.weaknessDesc}
-                  </p>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }
