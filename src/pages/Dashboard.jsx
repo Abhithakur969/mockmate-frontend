@@ -43,73 +43,63 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
-  // Safe Dynamic Initializer for Live Metric Synchronizations
-  const [liveStats, setLiveStats] = useState(() => {
+  // Helper logic to parse storage metrics isolated outside of standard state cascades
+  const getLatestStorageStats = () => {
     const defaultStats = {
       streak: 1,
       hoursLog: 4.5,
       solvedCount: 0,
       solvedToday: 0,
     };
-
     try {
       const history = localStorage.getItem("mockmate_practice_history");
       if (history) {
         const parsedHistory = JSON.parse(history);
-        const totalSolved = parsedHistory.length;
         const todayStr = new Date().toDateString();
-        const itemsToday = parsedHistory.filter((item) => {
-          return (
+        const itemsToday = parsedHistory.filter(
+          (item) =>
             item.timestamp &&
-            new Date(item.timestamp).toDateString() === todayStr
-          );
-        }).length;
+            new Date(item.timestamp).toDateString() === todayStr,
+        ).length;
 
         return {
           ...defaultStats,
-          solvedCount: totalSolved,
+          solvedCount: parsedHistory.length,
           solvedToday: itemsToday,
         };
       }
     } catch (err) {
-      console.error("Failed initializing raw stats storage data:", err);
+      console.error("Failed to parse storage array:", err);
     }
     return defaultStats;
-  });
+  };
 
-  // Balanced Synchronization effect loop that satisfies ESLint constraints
+  // Safe Initialization using our helper function
+  const [liveStats, setLiveStats] = useState(() => getLatestStorageStats());
+
+  // Fixed: Listens directly to structural changes securely, leaving dependencies completely empty
   useEffect(() => {
-    try {
-      const history = localStorage.getItem("mockmate_practice_history");
-      if (history) {
-        const parsedHistory = JSON.parse(history);
-        const totalSolved = parsedHistory.length;
-        const todayStr = new Date().toDateString();
-        const itemsToday = parsedHistory.filter((item) => {
-          return (
-            item.timestamp &&
-            new Date(item.timestamp).toDateString() === todayStr
-          );
-        }).length;
+    const syncDashboardMetrics = () => {
+      const currentStorage = getLatestStorageStats();
+      setLiveStats((prev) => {
+        if (
+          prev.solvedCount !== currentStorage.solvedCount ||
+          prev.solvedToday !== currentStorage.solvedToday
+        ) {
+          return currentStorage;
+        }
+        return prev;
+      });
+    };
 
-        // CRITICAL FIX: Only call setState if data values have actually altered!
-        setLiveStats((prev) => {
-          if (
-            prev.solvedCount !== totalSolved ||
-            prev.solvedToday !== itemsToday
-          ) {
-            return {
-              ...prev,
-              solvedCount: totalSolved,
-              solvedToday: itemsToday,
-            };
-          }
-          return prev;
-        });
-      }
-    } catch (err) {
-      console.error("Failed syncing tracking state context runtime:", err);
-    }
+    // Sync on window focus and standard storage events across layout boxes
+    window.addEventListener("storage", syncDashboardMetrics);
+    window.addEventListener("focus", syncDashboardMetrics);
+
+    return () => {
+      window.removeEventListener("storage", syncDashboardMetrics);
+      window.removeEventListener("focus", syncDashboardMetrics);
+    };
   }, []);
 
   const saveProfileData = (e) => {
@@ -261,7 +251,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
           </div>
 
-          {/* --- ADDED BACK FEATURE: Core Specialization Modules Panels --- */}
+          {/* Core Specialization Modules Panels */}
           <div className="space-y-4">
             <div>
               <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
@@ -355,9 +345,8 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
           </div>
 
-          {/* --- ADDED BACK FEATURE: Live Practice Diagnostics with Session Evaluation Metrics --- */}
+          {/* Live Practice Diagnostics with Session Evaluation Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-            {/* Left/Middle Content: Diagnostics blocks */}
             <div className="lg:col-span-2 space-y-4">
               <div>
                 <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
@@ -403,7 +392,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
               </div>
             </div>
 
-            {/* Right Content: Sidebar Assessment Metrics Progress Sliders */}
+            {/* Sidebar Assessment Metrics Progress Sliders */}
             <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-baseline mb-4">
@@ -427,7 +416,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
 
                 {/* Progress Indicators */}
                 <div className="space-y-3">
-                  {/* Comm Evaluation */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-mono">
                       <span className="text-[#706B63]">
@@ -443,7 +431,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     </div>
                   </div>
 
-                  {/* Tech Depth */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-mono">
                       <span className="text-[#706B63]">
@@ -459,7 +446,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     </div>
                   </div>
 
-                  {/* Algorithmic Solving */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-mono">
                       <span className="text-[#706B63]">
@@ -475,7 +461,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     </div>
                   </div>
 
-                  {/* Production Code Quality */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] font-mono">
                       <span className="text-[#706B63]">
