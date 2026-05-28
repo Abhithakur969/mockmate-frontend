@@ -35,6 +35,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Initialize quote index safely on mount
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * CODE_QUOTES.length),
   );
@@ -43,7 +44,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
-  // Helper logic to parse storage metrics isolated outside of standard state cascades
+  // Safe helper to read metrics from localStorage without breaking hook dependencies
   const getLatestStorageStats = () => {
     const defaultStats = {
       streak: 1,
@@ -74,10 +75,10 @@ export default function Dashboard({ userProfile, setUserProfile }) {
     return defaultStats;
   };
 
-  // Safe Initialization using our helper function
+  // Safe initial state setup
   const [liveStats, setLiveStats] = useState(() => getLatestStorageStats());
 
-  // Fixed: Listens directly to structural changes securely, leaving dependencies completely empty
+  // Handles updates cleanly when local storage events trigger
   useEffect(() => {
     const syncDashboardMetrics = () => {
       const currentStorage = getLatestStorageStats();
@@ -92,13 +93,17 @@ export default function Dashboard({ userProfile, setUserProfile }) {
       });
     };
 
-    // Sync on window focus and standard storage events across layout boxes
     window.addEventListener("storage", syncDashboardMetrics);
     window.addEventListener("focus", syncDashboardMetrics);
+    window.addEventListener("mockmate_practice_logged", syncDashboardMetrics);
 
     return () => {
       window.removeEventListener("storage", syncDashboardMetrics);
       window.removeEventListener("focus", syncDashboardMetrics);
+      window.removeEventListener(
+        "mockmate_practice_logged",
+        syncDashboardMetrics,
+      );
     };
   }, []);
 
@@ -183,6 +188,16 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </span>
               </p>
             </div>
+            <button
+              onClick={() => {
+                setEditName(userProfile?.name || "");
+                setEditTrack(userProfile?.track || "");
+                setIsModalOpen(true);
+              }}
+              className="border border-[#E8E4DC] bg-[#FAF9F5] text-[#1C1A17] font-mono text-[11px] h-9 px-4 rounded-md hover:bg-[#EFECE6] transition-colors self-start sm:self-center"
+            >
+              ⚙️ Modify Parameters
+            </button>
           </div>
 
           {/* Motivation Quote Container */}
@@ -229,12 +244,12 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
             <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
               <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
-                Cumulative Progress Metrics
+                Progress Scope
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
                 {liveStats.solvedCount}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
-                  / 240 questions
+                  / 240 items
                 </span>
               </p>
             </div>
@@ -278,9 +293,12 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     REACT • CSS ARCHITECTURE • VIRTUAL DOM
                   </p>
                 </div>
-                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                <button
+                  onClick={() => navigate("/question-bank")}
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                >
                   Continue Track Module &rarr;
-                </div>
+                </button>
               </div>
 
               {/* Backend Card */}
@@ -298,9 +316,12 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     NODE.JS • REST APIS • TRANSACTION ISOLATION
                   </p>
                 </div>
-                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                <button
+                  onClick={() => navigate("/question-bank")}
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                >
                   Continue Track Module &rarr;
-                </div>
+                </button>
               </div>
 
               {/* Full Stack Card */}
@@ -318,9 +339,12 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     SYSTEM PIPELINES • CORS • RELATIONAL SCALING
                   </p>
                 </div>
-                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                <button
+                  onClick={() => navigate("/question-bank")}
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                >
                   Continue Track Module &rarr;
-                </div>
+                </button>
               </div>
 
               {/* Data / ML Card */}
@@ -338,144 +362,49 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                     PYTHON • FEATURE ANALYTICS • SCALE OPERATIONS
                   </p>
                 </div>
-                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                <button
+                  onClick={() => navigate("/question-bank")}
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                >
                   Continue Track Module &rarr;
-                </div>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Live Practice Diagnostics with Session Evaluation Metrics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-            <div className="lg:col-span-2 space-y-4">
-              <div>
-                <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
-                  Live Practice Diagnostics
-                </h3>
-                <p className="text-[#9C9487] text-[11px] mt-0.5">
-                  Automated programmatic logic processing your active metrics to
-                  provide actionable professional goals.
+          {/* Live Practice Diagnostics Container */}
+          <div className="space-y-4">
+            <h3 className="font-mono text-[11px] tracking-wider text-[#9C9487] uppercase font-600">
+              Live Practice Diagnostics
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Identified Asset */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs space-y-2">
+                <span className="font-serif italic text-lg text-[#2E6B3D] font-300">
+                  Identified Asset ✓
+                </span>
+                <p className="font-serif font-600 text-lg leading-snug">
+                  Communication
+                </p>
+                <p className="font-sans text-xs text-[#706B63] leading-relaxed font-300">
+                  Clear and articulate responses demonstrated technical
+                  confidence. Continue to integrate professional phrasing during
+                  solution delivery.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Asset Panel */}
-                <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs space-y-2">
-                  <div className="text-[#2E6B3D] font-mono text-[10px] uppercase tracking-wider font-600 flex items-center gap-1">
-                    ✓ Identified Core Asset
-                  </div>
-                  <h4 className="font-serif text-[15px] font-600 text-[#1C1A17]">
-                    Excellent baseline inside Communication
-                  </h4>
-                  <p className="text-[#706B63] text-[12px] leading-relaxed">
-                    Your performance mark of 88% establishes clear technical
-                    proficiency here. Continue applying this exact tactical
-                    delivery standard across complex operational scenarios.
-                  </p>
-                </div>
-
-                {/* Optimization Panel */}
-                <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs space-y-2">
-                  <div className="text-[#B36B2E] font-mono text-[10px] uppercase tracking-wider font-600 flex items-center gap-1">
-                    ⚠️ Tactical Optimization Required
-                  </div>
-                  <h4 className="font-serif text-[15px] font-600 text-[#1C1A17]">
-                    Focus Required: Elevate Technical Depth
-                  </h4>
-                  <p className="text-[#706B63] text-[12px] leading-relaxed">
-                    Your cumulative evaluation standing is currently limited by
-                    Technical Depth (74%). Target the corresponding technical
-                    sets in your Question Bank to directly counteract this
-                    limitation.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar Assessment Metrics Progress Sliders */}
-            <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-baseline mb-4">
-                  <div>
-                    <span className="block font-mono text-[9px] text-[#9C9487] uppercase tracking-wider">
-                      Session Overview
-                    </span>
-                    <h4 className="font-serif text-[16px] font-600 text-[#1C1A17] mt-0.5">
-                      Evaluation Metrics
-                    </h4>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-serif text-xl font-600 text-[#2E6B3D]">
-                      81%
-                    </span>
-                    <span className="block font-mono text-[7px] text-[#A69F93] uppercase tracking-widest">
-                      Weighted Score
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Indicators */}
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-[#706B63]">
-                        Communication Evaluation
-                      </span>
-                      <span className="text-[#1C1A17] font-500">88%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#2E6B3D] rounded-full"
-                        style={{ width: "88%" }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-[#706B63]">
-                        Technical Depth Profiling
-                      </span>
-                      <span className="text-[#1C1A17] font-500">74%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#B36B2E] rounded-full"
-                        style={{ width: "74%" }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-[#706B63]">
-                        Algorithmic Problem Solving
-                      </span>
-                      <span className="text-[#1C1A17] font-500">82%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#2E6B3D] rounded-full"
-                        style={{ width: "82%" }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-[#706B63]">
-                        Production Code Quality
-                      </span>
-                      <span className="text-[#1C1A17] font-500">79%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#2E6B3D] rounded-full"
-                        style={{ width: "79%" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+              {/* Tactical Focus */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs space-y-2">
+                <span className="font-serif italic text-lg text-[#B36B2E] font-300">
+                  Tactical Focus Required ⚠️
+                </span>
+                <p className="font-serif font-600 text-lg leading-snug">
+                  Elevated Technical Depth
+                </p>
+                <p className="font-sans text-xs text-[#706B63] leading-relaxed font-300">
+                  Practice technical depth profiling. Question bank validation
+                  can strengthen technical architecture definitions.
+                </p>
               </div>
             </div>
           </div>
