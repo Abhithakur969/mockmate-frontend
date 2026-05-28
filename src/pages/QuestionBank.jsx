@@ -386,6 +386,20 @@ export default function QuestionBank() {
     }));
   };
 
+  // FIXED: Live Derived Metric for Upper Total Overview Count
+  const prefix =
+    selectedRole === "Frontend Developer"
+      ? "fe"
+      : selectedRole === "Backend Developer"
+        ? "be"
+        : selectedRole === "Full Stack Developer"
+          ? "fs"
+          : "ml";
+
+  const totalCompletedOnActiveBoard = Object.keys(completedTasks).filter(
+    (k) => k.startsWith(prefix) && completedTasks[k] === true,
+  ).length;
+
   return (
     <div className="flex h-screen bg-bg-alt overflow-hidden">
       <Sidebar
@@ -398,6 +412,7 @@ export default function QuestionBank() {
         {/* Header Block */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-[#EAE3D2] h-14 flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center">
+            {/* FIXED: Links cleanly with Sidebar drawer toggles */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden w-8 h-8 flex items-center justify-center border border-[#EAE3D2] mr-3"
@@ -483,21 +498,9 @@ export default function QuestionBank() {
                   {selectedRole} Subsets
                 </h1>
               </div>
+              {/* FIXED: Live count is fully synchronized to update on checking or unchecking instantly */}
               <p className="font-mono text-[11px] bg-[#E8DFC8]/40 text-[#1A1612] px-3 py-1 font-500 rounded-xs">
-                {
-                  Object.keys(completedTasks).filter((k) =>
-                    k.startsWith(
-                      selectedRole === "Frontend Developer"
-                        ? "fe"
-                        : selectedRole === "Backend Developer"
-                          ? "be"
-                          : selectedRole === "Full Stack Developer"
-                            ? "fs"
-                            : "ml",
-                    ),
-                  ).length
-                }{" "}
-                / 60 Completed
+                {totalCompletedOnActiveBoard} / 60 Completed
               </p>
             </div>
 
@@ -510,95 +513,82 @@ export default function QuestionBank() {
                 const completedInThisSet = set.questions.filter(
                   (_, qIdx) => completedTasks[`${set.id}-${qIdx}`],
                 ).length;
-                const completionPercentage = Math.round(
-                  (completedInThisSet / set.questions.length) * 100,
-                );
+                const completionPercentage =
+                  Math.round(
+                    (completedInThisSet / set.questions.length) * 100,
+                  ) || 0;
 
                 return (
                   <div
                     key={set.id}
-                    className="bg-white border border-[#EAE3D2] shadow-xs overflow-hidden transition-all"
+                    className="bg-white border border-[#EAE3D2] rounded-xs overflow-hidden"
                   >
-                    {/* Header bar click element */}
-                    <button
+                    {/* Accordion Toggle Card Header Row */}
+                    <div
                       onClick={() => setOpenSetIndex(isOpen ? null : setIdx)}
-                      className="w-full px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between text-left hover:bg-[#FBF9F4] transition-colors gap-2"
+                      className="p-5 flex items-center justify-between cursor-pointer hover:bg-[#FDFDFB] select-none gap-4"
                     >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`w-2 h-2 rounded-full transition-colors ${completionPercentage === 100 ? "bg-[#2E6B3D]" : "bg-amber-400"}`}
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${completionPercentage === 100 ? "bg-[#2E6B3D]" : "bg-amber-500"}`}
                         />
                         <h3 className="font-sans font-600 text-[14px] text-[#1A1612]">
                           {set.title}
                         </h3>
                       </div>
 
-                      <div className="flex items-center gap-4 self-end sm:self-auto">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-[#F2ECE0] rounded-full overflow-hidden hidden sm:block">
-                            <div
-                              className="h-full bg-[#2E6B3D]"
-                              style={{ width: `${completionPercentage}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-[11px] text-zinc-500 min-w-[50px] text-right">
-                            {completedInThisSet}/{set.questions.length} (
-                            {completionPercentage}%)
-                          </span>
-                        </div>
-                        <span className="text-zinc-400 font-mono text-xs">
-                          {isOpen ? "▲" : "▼"}
+                      <div className="flex items-center space-x-4">
+                        <span className="font-mono text-[11px] text-zinc-400">
+                          {completedInThisSet} / {set.questions.length} (
+                          {completionPercentage}%)
                         </span>
+                        <svg
+                          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                          />
+                        </svg>
                       </div>
-                    </button>
+                    </div>
 
-                    {/* Expandable Accordion Body block */}
+                    {/* Question Row Segment List Wrapper */}
                     {isOpen && (
-                      <div className="border-t border-[#F2ECE0] px-5 py-4 bg-white space-y-1">
-                        {set.questions.map((q, qIdx) => {
+                      <div className="border-t border-[#EAE3D2] bg-[#FAF9F4]/30 px-5 py-3 space-y-2">
+                        {set.questions.map((question, qIdx) => {
                           const isDone = !!completedTasks[`${set.id}-${qIdx}`];
                           return (
-                            <label
+                            <div
                               key={qIdx}
-                              className={`flex items-start gap-3 p-3 rounded-xs cursor-pointer transition-colors group ${
-                                isDone ? "bg-[#2E6B3D]/5" : "hover:bg-[#FBF9F4]"
+                              onClick={() => toggleQuestion(set.id, qIdx)}
+                              className={`flex items-start space-x-3 p-3 rounded-xs border transition-all cursor-pointer select-none ${
+                                isDone
+                                  ? "bg-[#2E6B3D]/5 border-[#2E6B3D]/20"
+                                  : "bg-white border-[#EAE3D2] hover:border-zinc-400"
                               }`}
                             >
-                              <input
-                                type="checkbox"
-                                checked={isDone}
-                                onChange={() => toggleQuestion(set.id, qIdx)}
-                                className="mt-1 w-4 h-4 rounded-sm border-[#EAE3D2] text-[#2E6B3D] focus:ring-[#2E6B3D]"
-                              />
-                              <div className="text-[13px]">
-                                <span className="font-mono text-[10px] text-zinc-400 mr-1.5">
-                                  {(qIdx + 1).toString().padStart(2, "0")}.
-                                </span>
-                                <span
-                                  className={`font-sans font-300 leading-relaxed ${isDone ? "text-zinc-400 line-through" : "text-[#1A1612]"}`}
-                                >
-                                  {q}
-                                </span>
+                              <div className="flex items-center h-5 mt-0.5">
+                                <input
+                                  type="checkbox"
+                                  checked={isDone}
+                                  readOnly
+                                  className="w-3.5 h-3.5 text-[#2E6B3D] border-[#EAE3D2] focus:ring-0 cursor-pointer"
+                                />
                               </div>
-                            </label>
+                              <p
+                                className={`font-sans text-[13px] leading-relaxed ${isDone ? "text-zinc-400 line-through font-300" : "text-[#1A1612]"}`}
+                              >
+                                {question}
+                              </p>
+                            </div>
                           );
                         })}
-
-                        {/* Interactive conditional dynamic helper footer inside accordion panel */}
-                        <div className="mt-4 pt-3 border-t border-[#F2ECE0] flex justify-between items-center">
-                          <span className="font-mono text-[10px] text-zinc-400 uppercase">
-                            Set Panel Checklist
-                          </span>
-                          {completionPercentage < 100 ? (
-                            <span className="font-mono text-[10px] text-amber-600 font-500">
-                              Keep grinding to finish this block! 🔥
-                            </span>
-                          ) : (
-                            <span className="font-mono text-[10px] text-[#2E6B3D] font-600 flex items-center gap-1">
-                              🎉 Set fully mastered!
-                            </span>
-                          )}
-                        </div>
                       </div>
                     )}
                   </div>

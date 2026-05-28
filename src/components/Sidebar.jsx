@@ -2,11 +2,17 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function Sidebar({
   isOpen,
+  mobileOpen, // Added to accept the mobile variable from QuestionBank
   onClose,
   userProfile,
+  profile, // Added to accept the profile variable from QuestionBank
   onTriggerEdit,
 }) {
   const location = useLocation();
+
+  // Handle both naming variations to keep components structurally safe
+  const isSidebarOpen = isOpen || mobileOpen;
+  const activeProfile = userProfile || profile;
 
   const menuLinks = [
     { name: "Dashboard", target: "/dashboard", emblem: "📊" },
@@ -18,7 +24,7 @@ export default function Sidebar({
   const coreSidebarPanel = (
     <div className="flex flex-col h-full bg-[#FAF9F5] border-r border-[#EFECE6] p-4 relative">
       {/* Brand Section Header */}
-      <div className="h-16 flex items-center px-2 border-b border-[#EFECE6] shrink-0">
+      <div className="h-16 flex items-center justify-between px-2 border-b border-[#EFECE6] shrink-0">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 bg-[#2E6B3D] text-white flex items-center justify-center font-mono font-700 rounded-lg text-[14px]">
             M
@@ -27,6 +33,26 @@ export default function Sidebar({
             MOCKMATE
           </span>
         </div>
+
+        {/* Mobile close chevron/cross button strictly visible inside open overlay phone drawer */}
+        <button
+          onClick={() => onClose && onClose()}
+          className="lg:hidden w-7 h-7 flex items-center justify-center rounded-md border border-[#E8E4DC] bg-white text-[#706B63]"
+        >
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Main Navigation Row Selection Engine */}
@@ -65,14 +91,18 @@ export default function Sidebar({
           title="Click to edit profile parameter configurations"
         >
           <div className="w-10 h-10 shrink-0 bg-[#2E6B3D] text-white flex items-center justify-center rounded-xl font-serif font-600 text-[15px] shadow-sm shadow-[#2E6B3D]/20">
-            {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : "D"}
+            {activeProfile?.name
+              ? activeProfile.name.charAt(0).toUpperCase()
+              : "A"}
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="font-sans font-600 text-[13px] text-[#1C1A17] truncate leading-tight">
-              {userProfile?.name || "Developer Profile"}
+              {activeProfile?.name || "Abhishek Kumar"}
             </h4>
             <p className="font-sans text-[11px] text-[#706B63] truncate mt-0.5 font-400">
-              {userProfile?.track || "Tap to configure tracking Focus"}
+              {activeProfile?.goal ||
+                activeProfile?.track ||
+                "Computer Science Engineer"}
             </p>
           </div>
         </div>
@@ -88,7 +118,7 @@ export default function Sidebar({
       </aside>
 
       {/* Mobile Backdrop Overlay Wrapper */}
-      {isOpen && (
+      {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden animate-in fade-in duration-150">
           {/* Grayed-out backing surface blur masks */}
           <div
