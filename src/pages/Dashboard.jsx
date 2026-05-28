@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { QUESTIONS } from "../data/question"; // IMPORT ADDED
 
 const CODE_QUOTES = [
   "Clean code is not written; it is written on top of structural revisions.",
@@ -32,6 +33,21 @@ const CODE_QUOTES = [
 ];
 
 const getTodayStr = () => new Date().toDateString();
+
+// Helper to calculate dynamic module completion percentage
+const getModulePercentage = (roleLabel) => {
+  try {
+    const raw = localStorage.getItem("mockmate_question_progress");
+    const progress = raw ? JSON.parse(raw) : {};
+    const roleQuestions = QUESTIONS[roleLabel] || [];
+    if (roleQuestions.length === 0) return 0;
+
+    const solvedCount = roleQuestions.filter((q) => progress[q.id]).length;
+    return Math.round((solvedCount / roleQuestions.length) * 100);
+  } catch {
+    return 0;
+  }
+};
 
 const computeStreak = () => {
   try {
@@ -127,13 +143,15 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * CODE_QUOTES.length),
   );
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
   const [streak, setStreak] = useState(() => computeStreak());
   const [liveStats, setLiveStats] = useState(() => computeTodayStats());
+
+  // Dynamically calculate the total track questions directly from the source
+  const TOTAL_QUESTIONS_COUNT = Object.values(QUESTIONS).flat().length;
 
   useEffect(() => {
     const onVisible = () => {
@@ -311,7 +329,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
                 {liveStats.totalSolved}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
-                  / 240 items
+                  / {TOTAL_QUESTIONS_COUNT} items
                 </span>
               </p>
             </div>
@@ -347,6 +365,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 selections.
               </p>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
                 <div>
@@ -355,7 +374,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                       Frontend Developer
                     </h4>
                     <span className="font-serif text-2xl text-[#2E6B3D] italic font-500">
-                      0%
+                      {getModulePercentage("Frontend Developer")}%
                     </span>
                   </div>
                   <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
@@ -377,7 +396,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                       Backend Developer
                     </h4>
                     <span className="font-serif text-2xl text-[#2E6B3D] italic font-500">
-                      0%
+                      {getModulePercentage("Backend Developer")}%
                     </span>
                   </div>
                   <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
@@ -399,7 +418,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                       Full Stack Developer
                     </h4>
                     <span className="font-serif text-2xl text-[#B36B2E] italic font-500">
-                      0%
+                      {getModulePercentage("Full Stack Developer")}%
                     </span>
                   </div>
                   <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
@@ -408,7 +427,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </div>
                 <button
                   onClick={() => navigate("/question-bank")}
-                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#B36B2E] transition-colors cursor-pointer"
                 >
                   Continue Track Module &rarr;
                 </button>
@@ -421,7 +440,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                       Data / ML Engineer
                     </h4>
                     <span className="font-serif text-2xl text-[#7A4DB8] italic font-500">
-                      0%
+                      {getModulePercentage("Data / ML Engineer")}%
                     </span>
                   </div>
                   <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
@@ -430,7 +449,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </div>
                 <button
                   onClick={() => navigate("/question-bank")}
-                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] transition-colors cursor-pointer"
+                  className="w-full text-left bg-transparent border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#7A4DB8] transition-colors cursor-pointer"
                 >
                   Continue Track Module &rarr;
                 </button>

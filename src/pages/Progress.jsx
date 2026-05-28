@@ -1,41 +1,39 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
+import { QUESTIONS } from "../data/question"; // IMPORT ADDED
 
 export default function Progress() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [questionProgress, setQuestionProgress] = useState(0);
+  const [progressionData, setProgressionData] = useState([]);
 
-  // Read directly from localStorage on the very first frame to prevent hardcoded flashes
+  // Fixed wrong profile key: now uses "mockmate_profile_db" like the Dashboard
   const [profile, setProfile] = useState(() => {
-    const savedProfile = localStorage.getItem("user_profile");
+    const savedProfile = localStorage.getItem("mockmate_profile_db");
     if (savedProfile) {
       try {
         const parsed = JSON.parse(savedProfile);
         return {
           name: parsed.name || "",
-          goal: parsed.goal || parsed.track || "",
+          goal: parsed.track || "",
         };
       } catch (e) {
         console.error("Error parsing user profile data", e);
       }
     }
-    return { name: "", goal: "" }; // Clean fallback if entirely empty
+    return { name: "", goal: "" };
   });
 
-  // Sync profile parameters and question metrics dynamically
   useEffect(() => {
     const loadSyncedData = () => {
       // 1. Fetch live global profile state
-      const savedProfile = localStorage.getItem("user_profile");
+      const savedProfile = localStorage.getItem("mockmate_profile_db");
       if (savedProfile) {
         try {
           const parsedProfile = JSON.parse(savedProfile);
           setProfile({
-            name: parsedProfile.name || "Abhishek",
-            goal:
-              parsedProfile.goal ||
-              parsedProfile.track ||
-              "Computer Science Engineer",
+            name: parsedProfile.name || "Developer",
+            goal: parsedProfile.track || "Software Engineer",
           });
         } catch (e) {
           console.error("Error parsing user profile data", e);
@@ -47,7 +45,6 @@ export default function Progress() {
       if (savedProgress) {
         try {
           const parsed = JSON.parse(savedProgress);
-          // Filter and count only actively checked question items
           const totalChecked = Object.values(parsed).filter(Boolean).length;
           setQuestionProgress(totalChecked);
         } catch (e) {
@@ -56,33 +53,63 @@ export default function Progress() {
       } else {
         setQuestionProgress(0);
       }
+
+      // 3. Load Real Practice History for Chart (Replacing Hardcoded Data)
+      const savedHistory = localStorage.getItem("mockmate_practice_history");
+      if (savedHistory) {
+        try {
+          const history = JSON.parse(savedHistory);
+          // Grab the last 9 attempts so the graph fits nicely
+          const mappedData = history.slice(-9).map((entry, idx) => ({
+            week: `Day ${idx + 1}`,
+            mock: `Test ${idx + 1}`,
+            score:
+              typeof entry.score === "number"
+                ? entry.score
+                : entry.passed
+                  ? 8
+                  : 4,
+          }));
+          setProgressionData(
+            mappedData && mappedData.length > 0
+              ? mappedData
+              : [{ week: "Start", mock: "-", score: 0 }],
+          );
+        } catch (e) {
+          // 1. Log the full error to your browser console (F12) to see line numbers
+          console.error("Full Error Object:", e);
+
+          // 2. Log just the human-readable error message (e.g., "Cannot read property 'map' of undefined")
+          console.error("Error Message:", e.message);
+
+          // Fallback so the UI stays stable
+          setProgressionData([{ week: "Start", mock: "-", score: 0 }]);
+        }
+      } else {
+        setProgressionData([{ week: "Start", mock: "-", score: 0 }]);
+      }
     };
 
-    // Load data instantly on mount
     loadSyncedData();
 
-    // Listen to live updates coming from the Question Bank actions
     window.addEventListener("storage", loadSyncedData);
     return () => window.removeEventListener("storage", loadSyncedData);
   }, []);
 
-  // Updated dataset metric scope out of 240 items
-  const totalTrackQuestions = 240;
+  // Dynamically calculate the total track questions directly from the source
+  const totalTrackQuestions = Object.values(QUESTIONS).flat().length;
   const globalPercentage =
     Math.round((questionProgress / totalTrackQuestions) * 100) || 0;
 
-  // Me vs Me performance logs line matrix
-  const progressionData = [
-    { week: "W1", mock: "M1", score: 3.2 },
-    { week: "W2", mock: "M2", score: 3.2 },
-    { week: "W3", mock: "M3", score: 3.8 },
-    { week: "W4", mock: "M4", score: 5.0 },
-    { week: "W5", mock: "M5", score: 6.5 },
-    { week: "W6", mock: "M6", score: 6.5 },
-    { week: "W7", mock: "M7", score: 7.4 },
-    { week: "W8", mock: "M8", score: 7.4 },
-    { week: "W9", mock: "M9", score: 7.4 },
-  ];
+  // Calculate average evaluation standing for the UI card
+  const avgStanding =
+    progressionData.length > 0
+      ? Math.round(
+          (progressionData.reduce((acc, curr) => acc + curr.score, 0) /
+            (progressionData.length * 8)) *
+            100,
+        )
+      : 0;
 
   return (
     <div className="flex h-screen bg-[#FBF9F4] overflow-hidden">
@@ -93,7 +120,6 @@ export default function Progress() {
       />
 
       <main className="flex-1 overflow-y-auto min-w-0 bg-[#FBF9F4]">
-        {/* Top Navbar */}
         <div className="sticky top-0 z-30 bg-white border-b border-[#EAE3D2] h-14 flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center">
             <button
@@ -120,7 +146,6 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* Analytics Body Layout Wrapper */}
         <div className="w-full mx-auto px-6 py-8 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Left Block: Real-Time Core Logs */}
@@ -158,13 +183,16 @@ export default function Progress() {
                     Active Evaluation Standing
                   </p>
                   <p className="font-serif text-2xl text-[#2E6B3D] mt-1 font-300">
-                    82%{" "}
+                    {avgStanding}%{" "}
                     <span className="text-xs font-sans text-zinc-400">
                       Avg Weight
                     </span>
                   </p>
                   <div className="w-full bg-[#EFECE6] h-1.5 rounded-full mt-3 overflow-hidden">
-                    <div className="bg-[#2E6B3D] h-full w-[82%]" />
+                    <div
+                      className="bg-[#2E6B3D] h-full transition-all duration-300"
+                      style={{ width: `${avgStanding}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -196,7 +224,7 @@ export default function Progress() {
                           key={index}
                           className="flex items-center space-x-3 text-left"
                         >
-                          <div className="w-16 shrink-0 font-sans text-[11px] text-[#5C574F] font-500">
+                          <div className="w-20 shrink-0 font-sans text-[11px] text-[#5C574F] font-500">
                             {item.week}{" "}
                             <span className="text-zinc-400">({item.mock})</span>
                           </div>
@@ -216,32 +244,13 @@ export default function Progress() {
                   </div>
                 </div>
 
-                {/* Growth Delta Indicators */}
-                <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-                  <div className="p-2 border border-[#EFECE6] bg-white rounded-lg">
-                    <p className="font-mono text-[9px] text-zinc-400 uppercase">
-                      Weekly Delta
-                    </p>
-                    <p className="font-sans font-600 text-[13px] text-[#2E6B3D] mt-0.5">
-                      +4% 🌿
-                    </p>
-                  </div>
-                  <div className="p-2 border border-[#EFECE6] bg-white rounded-lg">
-                    <p className="font-mono text-[9px] text-zinc-400 uppercase">
-                      Mock Delta
-                    </p>
-                    <p className="font-sans font-600 text-[13px] text-[#2E6B3D] mt-0.5">
-                      +0.5 pts ✨
-                    </p>
-                  </div>
-                  <div className="p-2 border border-[#EFECE6] bg-white rounded-lg">
-                    <p className="font-mono text-[9px] text-zinc-400 uppercase">
-                      Streak
-                    </p>
-                    <p className="font-sans font-600 text-[13px] text-amber-700 mt-0.5">
-                      4 Mocks 💪
-                    </p>
-                  </div>
+                {/* Growth Delta Indicator */}
+                <div className="flex items-center space-x-2 text-[11px] font-mono text-[#706B63] bg-[#F2ECE0] p-3 rounded-xs border border-[#EAE3D2]">
+                  <span className="text-[#2E6B3D]">↑ Trending Upward</span>
+                  <span>
+                    - Continuous adaptation tracked across local storage
+                    records.
+                  </span>
                 </div>
               </div>
             </div>
