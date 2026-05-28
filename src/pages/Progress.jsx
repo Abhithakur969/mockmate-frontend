@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { QUESTIONS } from "../data/question"; // IMPORT ADDED
+import { QUESTIONS } from "../data/questions"; // IMPORT ADDED
 
 export default function Progress() {
   const [mobileOpen, setMobileOpen] = useState(false);
