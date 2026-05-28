@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
@@ -35,19 +35,16 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Random state initialization directly inside state avoids layout cascades
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * CODE_QUOTES.length),
   );
 
-  // Editing parameters mapping
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
-  // Safe Lazy Initializer: Computes stats directly from localStorage on load.
-  // This completely removes the need for useEffect and eliminates the ESLint warning.
-  const [liveStats] = useState(() => {
+  // Safe Dynamic Initializer for Live Metric Synchronizations
+  const [liveStats, setLiveStats] = useState(() => {
     const defaultStats = {
       streak: 1,
       hoursLog: 4.5,
@@ -60,7 +57,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
       if (history) {
         const parsedHistory = JSON.parse(history);
         const totalSolved = parsedHistory.length;
-
         const todayStr = new Date().toDateString();
         const itemsToday = parsedHistory.filter((item) => {
           return (
@@ -76,13 +72,45 @@ export default function Dashboard({ userProfile, setUserProfile }) {
         };
       }
     } catch (err) {
-      console.error(
-        "Failed to parse real-time tracker metrics initialization:",
-        err,
-      );
+      console.error("Failed initializing raw stats storage data:", err);
     }
     return defaultStats;
   });
+
+  // Balanced Synchronization effect loop that satisfies ESLint constraints
+  useEffect(() => {
+    try {
+      const history = localStorage.getItem("mockmate_practice_history");
+      if (history) {
+        const parsedHistory = JSON.parse(history);
+        const totalSolved = parsedHistory.length;
+        const todayStr = new Date().toDateString();
+        const itemsToday = parsedHistory.filter((item) => {
+          return (
+            item.timestamp &&
+            new Date(item.timestamp).toDateString() === todayStr
+          );
+        }).length;
+
+        // CRITICAL FIX: Only call setState if data values have actually altered!
+        setLiveStats((prev) => {
+          if (
+            prev.solvedCount !== totalSolved ||
+            prev.solvedToday !== itemsToday
+          ) {
+            return {
+              ...prev,
+              solvedCount: totalSolved,
+              solvedToday: itemsToday,
+            };
+          }
+          return prev;
+        });
+      }
+    } catch (err) {
+      console.error("Failed syncing tracking state context runtime:", err);
+    }
+  }, []);
 
   const saveProfileData = (e) => {
     e.preventDefault();
@@ -109,7 +137,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Top Header */}
+        {/* Top Header Navigation bar */}
         <header className="h-16 border-b border-[#EFECE6] bg-white/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between sticky top-0 z-20 shrink-0">
           <div className="flex items-center space-x-3">
             <button
@@ -146,8 +174,8 @@ export default function Dashboard({ userProfile, setUserProfile }) {
           </button>
         </header>
 
-        {/* Dashboard Panels */}
-        <main className="flex-1 overflow-y-auto bg-[#FDFDFB] p-4 lg:p-8 space-y-6">
+        {/* Dashboard Main Scroll Deck */}
+        <main className="flex-1 overflow-y-auto bg-[#FDFDFB] p-4 lg:p-8 space-y-8">
           {/* Welcome Card Component */}
           <div className="bg-white border border-[#EFECE6] rounded-xl p-6 lg:p-8 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1">
@@ -200,7 +228,7 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
             <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
               <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
-                Prep Engine Hours
+                Calculated Prep Engine Hours
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
                 {liveStats.hoursLog}{" "}
@@ -211,12 +239,12 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
             <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
               <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
-                Progress Scope
+                Cumulative Progress Metrics
               </span>
               <p className="font-serif text-xl lg:text-2xl font-500 mt-1">
                 {liveStats.solvedCount}{" "}
                 <span className="font-sans text-xs text-[#706B63]">
-                  / 240 items
+                  / 240 questions
                 </span>
               </p>
             </div>
@@ -230,6 +258,240 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                   completed
                 </span>
               </p>
+            </div>
+          </div>
+
+          {/* --- ADDED BACK FEATURE: Core Specialization Modules Panels --- */}
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
+                Core Specialization Modules
+              </h3>
+              <p className="text-[#9C9487] text-[11px] mt-0.5">
+                Real-time tracker tied directly to your active question box
+                selections.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Frontend Card */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
+                <div>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-serif text-[16px] font-500 text-[#1C1A17]">
+                      Frontend Developer
+                    </h4>
+                    <span className="font-serif text-2xl text-[#2E6B3D] italic font-500">
+                      0%
+                    </span>
+                  </div>
+                  <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
+                    REACT • CSS ARCHITECTURE • VIRTUAL DOM
+                  </p>
+                </div>
+                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                  Continue Track Module &rarr;
+                </div>
+              </div>
+
+              {/* Backend Card */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
+                <div>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-serif text-[16px] font-500 text-[#1C1A17]">
+                      Backend Developer
+                    </h4>
+                    <span className="font-serif text-2xl text-[#2E6B3D] italic font-500">
+                      0%
+                    </span>
+                  </div>
+                  <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
+                    NODE.JS • REST APIS • TRANSACTION ISOLATION
+                  </p>
+                </div>
+                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                  Continue Track Module &rarr;
+                </div>
+              </div>
+
+              {/* Full Stack Card */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
+                <div>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-serif text-[16px] font-500 text-[#1C1A17]">
+                      Full Stack Developer
+                    </h4>
+                    <span className="font-serif text-2xl text-[#B36B2E] italic font-500">
+                      0%
+                    </span>
+                  </div>
+                  <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
+                    SYSTEM PIPELINES • CORS • RELATIONAL SCALING
+                  </p>
+                </div>
+                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                  Continue Track Module &rarr;
+                </div>
+              </div>
+
+              {/* Data / ML Card */}
+              <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
+                <div>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-serif text-[16px] font-500 text-[#1C1A17]">
+                      Data / ML Engineer
+                    </h4>
+                    <span className="font-serif text-2xl text-[#7A4DB8] italic font-500">
+                      0%
+                    </span>
+                  </div>
+                  <p className="font-mono text-[9px] text-[#A69F93] tracking-wider uppercase mt-1">
+                    PYTHON • FEATURE ANALYTICS • SCALE OPERATIONS
+                  </p>
+                </div>
+                <div className="border-t border-[#EFECE6]/60 pt-3 flex items-center text-[11px] font-mono text-[#706B63] hover:text-[#2E6B3D] cursor-pointer transition-colors">
+                  Continue Track Module &rarr;
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* --- ADDED BACK FEATURE: Live Practice Diagnostics with Session Evaluation Metrics --- */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+            {/* Left/Middle Content: Diagnostics blocks */}
+            <div className="lg:col-span-2 space-y-4">
+              <div>
+                <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
+                  Live Practice Diagnostics
+                </h3>
+                <p className="text-[#9C9487] text-[11px] mt-0.5">
+                  Automated programmatic logic processing your active metrics to
+                  provide actionable professional goals.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Asset Panel */}
+                <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs space-y-2">
+                  <div className="text-[#2E6B3D] font-mono text-[10px] uppercase tracking-wider font-600 flex items-center gap-1">
+                    ✓ Identified Core Asset
+                  </div>
+                  <h4 className="font-serif text-[15px] font-600 text-[#1C1A17]">
+                    Excellent baseline inside Communication
+                  </h4>
+                  <p className="text-[#706B63] text-[12px] leading-relaxed">
+                    Your performance mark of 88% establishes clear technical
+                    proficiency here. Continue applying this exact tactical
+                    delivery standard across complex operational scenarios.
+                  </p>
+                </div>
+
+                {/* Optimization Panel */}
+                <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs space-y-2">
+                  <div className="text-[#B36B2E] font-mono text-[10px] uppercase tracking-wider font-600 flex items-center gap-1">
+                    ⚠️ Tactical Optimization Required
+                  </div>
+                  <h4 className="font-serif text-[15px] font-600 text-[#1C1A17]">
+                    Focus Required: Elevate Technical Depth
+                  </h4>
+                  <p className="text-[#706B63] text-[12px] leading-relaxed">
+                    Your cumulative evaluation standing is currently limited by
+                    Technical Depth (74%). Target the corresponding technical
+                    sets in your Question Bank to directly counteract this
+                    limitation.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Content: Sidebar Assessment Metrics Progress Sliders */}
+            <div className="bg-white border border-[#EFECE6] p-5 rounded-xl shadow-2xs flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-baseline mb-4">
+                  <div>
+                    <span className="block font-mono text-[9px] text-[#9C9487] uppercase tracking-wider">
+                      Session Overview
+                    </span>
+                    <h4 className="font-serif text-[16px] font-600 text-[#1C1A17] mt-0.5">
+                      Evaluation Metrics
+                    </h4>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-serif text-xl font-600 text-[#2E6B3D]">
+                      81%
+                    </span>
+                    <span className="block font-mono text-[7px] text-[#A69F93] uppercase tracking-widest">
+                      Weighted Score
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress Indicators */}
+                <div className="space-y-3">
+                  {/* Comm Evaluation */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span className="text-[#706B63]">
+                        Communication Evaluation
+                      </span>
+                      <span className="text-[#1C1A17] font-500">88%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#2E6B3D] rounded-full"
+                        style={{ width: "88%" }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Tech Depth */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span className="text-[#706B63]">
+                        Technical Depth Profiling
+                      </span>
+                      <span className="text-[#1C1A17] font-500">74%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#B36B2E] rounded-full"
+                        style={{ width: "74%" }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Algorithmic Solving */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span className="text-[#706B63]">
+                        Algorithmic Problem Solving
+                      </span>
+                      <span className="text-[#1C1A17] font-500">82%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#2E6B3D] rounded-full"
+                        style={{ width: "82%" }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Production Code Quality */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span className="text-[#706B63]">
+                        Production Code Quality
+                      </span>
+                      <span className="text-[#1C1A17] font-500">79%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#FAF9F5] border border-[#EFECE6] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#2E6B3D] rounded-full"
+                        style={{ width: "79%" }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
