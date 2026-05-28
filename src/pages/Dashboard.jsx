@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { QUESTIONS } from "../data/question"; // IMPORT ADDED
+import { QUESTIONS } from "../data/questions"; // IMPORT ADDED
 
 const CODE_QUOTES = [
   "Clean code is not written; it is written on top of structural revisions.",
