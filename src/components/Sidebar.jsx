@@ -2,10 +2,10 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function Sidebar({
   isOpen,
-  mobileOpen, // Added to accept the mobile variable from QuestionBank
+  mobileOpen,
   onClose,
   userProfile,
-  profile, // Added to accept the profile variable from QuestionBank
+  profile,
   onTriggerEdit,
 }) {
   const location = useLocation();
@@ -26,15 +26,21 @@ export default function Sidebar({
       {/* Brand Section Header */}
       <div className="h-16 flex items-center justify-between px-2 border-b border-[#EFECE6] shrink-0">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 bg-[#2E6B3D] text-white flex items-center justify-center font-mono font-700 rounded-lg text-[14px]">
+          {/* Green box 'M' works perfectly to navigate to the home page on both mobile and desktop */}
+          <Link
+            to="/"
+            onClick={() => onClose && onClose()}
+            className="w-8 h-8 bg-[#2E6B3D] text-white flex items-center justify-center font-mono font-700 rounded-lg text-[14px] hover:opacity-90 transition-opacity cursor-pointer"
+            title="Navigate to Home"
+          >
             M
-          </div>
+          </Link>
           <span className="font-mono text-[12px] font-700 tracking-widest text-[#1C1A17] uppercase">
             MOCKMATE
           </span>
         </div>
 
-        {/* Mobile close chevron/cross button strictly visible inside open overlay phone drawer */}
+        {/* Mobile close button visible inside open phone drawer overlay */}
         <button
           onClick={() => onClose && onClose()}
           className="lg:hidden w-7 h-7 flex items-center justify-center rounded-md border border-[#E8E4DC] bg-white text-[#706B63]"

@@ -1,6 +1,48 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 
+export default function QuestionBank() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState({ name: "Abhishek", goal: "Computer Science Engineer" });
+  const [progress, setProgress] = useState({});
+
+  // 1. Initial Data and Storage Sync Loaders
+  useEffect(() => {
+    const syncAppData = () => {
+      // Synchronize User Profile
+      const savedProfile = localStorage.getItem("user_profile");
+      if (savedProfile) {
+        try { setProfile(JSON.parse(savedProfile)); } catch (e) { console.error(e); }
+      }
+      
+      // Synchronize Question Progress Object
+      const savedProgress = localStorage.getItem("mockmate_question_progress");
+      if (savedProgress) {
+        try { setProgress(JSON.parse(savedProgress)); } catch (e) { console.error(e); }
+      }
+    };
+
+    syncAppData();
+    window.addEventListener("storage", syncAppData);
+    return () => window.removeEventListener("storage", syncAppData);
+  }, []);
+
+  // 2. The Checkbox Toggle Handler (Triggers Real-time Broadcast Event)
+  const handleToggleQuestion = (questionId) => {
+    const updatedProgress = {
+      ...progress,
+      [questionId]: !progress[questionId],
+    };
+    
+    // Save to local storage
+    localStorage.setItem("mockmate_question_progress", JSON.stringify(updatedProgress));
+    
+    // Update local react state
+    setProgress(updatedProgress);
+
+    // CRITICAL FIX: Broadcast event locally so the Progress page catches the change instantly
+    window.dispatchEvent(new Event("storage"));
+  };
 const DATA_SETS = {
   "Frontend Developer": [
     {
@@ -600,4 +642,5 @@ export default function QuestionBank() {
       </main>
     </div>
   );
+}
 }
