@@ -35,7 +35,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Initialize quote index safely on mount
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * CODE_QUOTES.length),
   );
@@ -44,7 +43,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
   const [editName, setEditName] = useState(userProfile?.name || "");
   const [editTrack, setEditTrack] = useState(userProfile?.track || "");
 
-  // Safe helper to read metrics from localStorage without breaking hook dependencies
   const getLatestStorageStats = () => {
     const defaultStats = {
       streak: 1,
@@ -75,22 +73,11 @@ export default function Dashboard({ userProfile, setUserProfile }) {
     return defaultStats;
   };
 
-  // Safe initial state setup
   const [liveStats, setLiveStats] = useState(() => getLatestStorageStats());
 
-  // Handles updates cleanly when local storage events trigger
   useEffect(() => {
     const syncDashboardMetrics = () => {
-      const currentStorage = getLatestStorageStats();
-      setLiveStats((prev) => {
-        if (
-          prev.solvedCount !== currentStorage.solvedCount ||
-          prev.solvedToday !== currentStorage.solvedToday
-        ) {
-          return currentStorage;
-        }
-        return prev;
-      });
+      setLiveStats(getLatestStorageStats());
     };
 
     window.addEventListener("storage", syncDashboardMetrics);
@@ -125,14 +112,13 @@ export default function Dashboard({ userProfile, setUserProfile }) {
         onClose={() => setMobileSidebarOpen(false)}
         userProfile={userProfile}
         onTriggerEdit={() => {
-          setEditName(userProfile.name);
-          setEditTrack(userProfile.track);
+          setEditName(userProfile?.name || "");
+          setEditTrack(userProfile?.track || "");
           setIsModalOpen(true);
         }}
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Top Header Navigation bar */}
         <header className="h-16 border-b border-[#EFECE6] bg-white/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between sticky top-0 z-20 shrink-0">
           <div className="flex items-center space-x-3">
             <button
@@ -169,9 +155,8 @@ export default function Dashboard({ userProfile, setUserProfile }) {
           </button>
         </header>
 
-        {/* Dashboard Main Scroll Deck */}
         <main className="flex-1 overflow-y-auto bg-[#FDFDFB] p-4 lg:p-8 space-y-8">
-          {/* Welcome Card Component */}
+          {/* Welcome Card Component - Removed Button completely */}
           <div className="bg-white border border-[#EFECE6] rounded-xl p-6 lg:p-8 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1">
               <h2 className="font-serif text-2xl lg:text-3xl font-500 tracking-tight">
@@ -188,19 +173,8 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </span>
               </p>
             </div>
-            <button
-              onClick={() => {
-                setEditName(userProfile?.name || "");
-                setEditTrack(userProfile?.track || "");
-                setIsModalOpen(true);
-              }}
-              className="border border-[#E8E4DC] bg-[#FAF9F5] text-[#1C1A17] font-mono text-[11px] h-9 px-4 rounded-md hover:bg-[#EFECE6] transition-colors self-start sm:self-center"
-            >
-              ⚙️ Modify Parameters
-            </button>
           </div>
 
-          {/* Motivation Quote Container */}
           <div
             onClick={() =>
               setQuoteIndex((prev) => (prev + 1) % CODE_QUOTES.length)
@@ -218,7 +192,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </p>
           </div>
 
-          {/* Grid Analytics Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white border border-[#EFECE6] p-4 rounded-xl shadow-2xs">
               <span className="block font-mono text-[9px] tracking-wider text-[#9C9487] uppercase">
@@ -266,7 +239,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
           </div>
 
-          {/* Core Specialization Modules Panels */}
           <div className="space-y-4">
             <div>
               <h3 className="font-mono text-[11px] tracking-wider text-[#1C1A17] uppercase font-600">
@@ -278,7 +250,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Frontend Card */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
                 <div>
                   <div className="flex justify-between items-start">
@@ -301,7 +272,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </button>
               </div>
 
-              {/* Backend Card */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
                 <div>
                   <div className="flex justify-between items-start">
@@ -324,7 +294,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </button>
               </div>
 
-              {/* Full Stack Card */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
                 <div>
                   <div className="flex justify-between items-start">
@@ -347,7 +316,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </button>
               </div>
 
-              {/* Data / ML Card */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs relative flex flex-col justify-between h-36">
                 <div>
                   <div className="flex justify-between items-start">
@@ -372,13 +340,11 @@ export default function Dashboard({ userProfile, setUserProfile }) {
             </div>
           </div>
 
-          {/* Live Practice Diagnostics Container */}
           <div className="space-y-4">
             <h3 className="font-mono text-[11px] tracking-wider text-[#9C9487] uppercase font-600">
               Live Practice Diagnostics
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Identified Asset */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs space-y-2">
                 <span className="font-serif italic text-lg text-[#2E6B3D] font-300">
                   Identified Asset ✓
@@ -393,7 +359,6 @@ export default function Dashboard({ userProfile, setUserProfile }) {
                 </p>
               </div>
 
-              {/* Tactical Focus */}
               <div className="bg-white border border-[#EFECE6] p-6 rounded-xl shadow-2xs space-y-2">
                 <span className="font-serif italic text-lg text-[#B36B2E] font-300">
                   Tactical Focus Required ⚠️
@@ -411,10 +376,9 @@ export default function Dashboard({ userProfile, setUserProfile }) {
         </main>
       </div>
 
-      {/* Profile Modification Overlay Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1A17]/40 backdrop-blur-sm">
-          <div className="bg-white border border-[#EFECE6] rounded-xl w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white border border-[#EFECE6] rounded-xl w-full max-w-md p-6 shadow-xl">
             <h3 className="font-serif text-xl font-600 text-[#1C1A17] mb-1">
               Update Engineering Parameters
             </h3>
